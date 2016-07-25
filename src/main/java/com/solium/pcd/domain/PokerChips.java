@@ -1,9 +1,10 @@
 package com.solium.pcd.domain;
 
 import com.solium.pcd.exception.AlgorithmException;
+import com.solium.pcd.math.Amount;
 import com.solium.pcd.util.Constants.Algorithm;
 
-import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +13,7 @@ public class PokerChips extends ArrayList<PokerChip> {
 
     private static final long serialVersionUID = 1L;
     private int _playerCount = 0;
-    private BigDecimal _buyInAmount = new BigDecimal("0.00");
+    private Amount _buyInAmount = Amount.ZERO;
 
     private Algorithm _algorithm = Algorithm.BASIC;
 
@@ -38,25 +39,25 @@ public class PokerChips extends ArrayList<PokerChip> {
     /**
      * @param buyInAmount the buyInAmount to set
      */
-    public final void setBuyInAmount(final BigDecimal buyInAmount) {
+    public final void setBuyInAmount(final Amount buyInAmount) {
         _buyInAmount = buyInAmount;
     }
 
     /**
      * @return the buyInAmount
      */
-    public final BigDecimal getBuyInAmount() {
+    public final Amount getBuyInAmount() {
         return _buyInAmount;
     }
 
-    public final BigDecimal getRemainingBuyIn() {
+    public final Amount getRemainingBuyIn() {
         return getBuyInAmount().subtract(getTotalBuyInAmount());
     }
 
-    private BigDecimal getTotalBuyInAmount() {
+    private Amount getTotalBuyInAmount() {
         return stream()
                 .map(PokerChip::getBuyInAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(Amount.ZERO, Amount::add);
     }
 
     /**
@@ -81,12 +82,12 @@ public class PokerChips extends ArrayList<PokerChip> {
             case BASIC:
             case BONUS_ONE:
                 for (PokerChip result : this) {
-                    System.out.println(String.format("%s - %s", result.getDenominationInDollars(), result.getBuyInQuantity()));
+                    System.out.println(MessageFormat.format("{0} - {1}", result.getDenominationInDollars(), result.getBuyInQuantity()));
                 }
                 break;
             case BONUS_TWO:
                 for (PokerChip result : this) {
-                    System.out.println(String.format("%s - %s - %d", result.getColor(), result.getDenominationInDollars(), result.getBuyInQuantity()));
+                    System.out.println(MessageFormat.format("{0} - {1} - {2}", result.getColor(), result.getDenominationInDollars(), result.getBuyInQuantity()));
                 }
                 break;
 

@@ -2,13 +2,9 @@ package com.solium.pcd.domain;
 
 import com.google.common.base.Preconditions;
 import com.solium.pcd.exception.PokerChipException;
+import com.solium.pcd.math.Amount;
 
-import java.math.BigDecimal;
 import java.text.MessageFormat;
-
-import static com.solium.pcd.util.Util.divideFor;
-import static com.solium.pcd.util.Util.getDollarAmount;
-import static com.solium.pcd.util.Util.isGreaterThanZero;
 
 public class PokerChip {
 
@@ -17,8 +13,7 @@ public class PokerChip {
     private int _buyInQuantity = 0;
     private int _quantityRemaining = 0;
     private int _quantitySetAside = 0;
-
-    private BigDecimal _denomination = new BigDecimal("0.00");
+    private Amount _denomination = Amount.ZERO;
 
     /**
      * @param denomination
@@ -26,7 +21,7 @@ public class PokerChip {
      * @return PokerChipDistribution object
      * @throws PokerChipException
      */
-    public PokerChip(final BigDecimal denomination, final int quantity) throws PokerChipException {
+    public PokerChip(final Amount denomination, final int quantity) throws PokerChipException {
         this(Color.UNKNOWN, denomination, quantity);
     }
 
@@ -38,18 +33,18 @@ public class PokerChip {
      * @throws PokerChipException
      */
     public PokerChip(final Color color,
-                     final BigDecimal denomination,
+                     final Amount denomination,
                      final int quantity) throws PokerChipException {
 
         Preconditions.checkNotNull(color, "Inputted colour must not be null.");
         Preconditions.checkNotNull(denomination, "Inputted denomiation must not be null.");
 
-        if (denomination.compareTo(new BigDecimal("0.00")) <= 0) {
-            throw new IllegalArgumentException(String.format("Inputted denomiation must be greater than zero, actual is [%s].", denomination.toString()));
+        if (denomination.lessThanOrEqual(Amount.ZERO)) {
+            throw new IllegalArgumentException(MessageFormat.format("Inputted denomiation must be greater than zero, actual is [{0}].", denomination.toString()));
         }
 
         if (quantity <= 0) {
-            throw new IllegalArgumentException(String.format("Inputted quantity must be greater than zero, actual is [%s].", Integer.toString(quantity)));
+            throw new IllegalArgumentException(MessageFormat.format("Inputted quantity must be greater than zero, actual is [{0}].", quantity));
         }
 
         setColor(color);
@@ -59,30 +54,56 @@ public class PokerChip {
     }
 
     /**
+     * @param denomination
+     * @param quantity
+     * @return
+     * @throws PokerChipException
+     */
+    static PokerChip of(final double denomination,
+                        final int quantity) throws PokerChipException {
+        return new PokerChip(Amount.of(denomination), quantity);
+    }
+
+    /**
+     * @param color
+     * @param denomination
+     * @param quantity
+     * @return
+     * @throws PokerChipException
+     */
+    static PokerChip of(final Color color,
+                        final double denomination,
+                        final int quantity) throws PokerChipException {
+        return new PokerChip(color, Amount.of(denomination), quantity);
+    }
+
+    /**
      * @param remainingBuyIn
      * @return calculated buyInQuantity
      */
-    public int buyInQuantityFor(final BigDecimal remainingBuyIn) {
+    public int buyInQuantityFor(final Amount remainingBuyIn) {
 
-        int buyInQuantity = buyInQuantityUpToMax(remainingBuyIn);
+        Amount buyInQuantity = buyInQuantityUpToMax(remainingBuyIn);
+        Amount quantity = Amount.of(getQuantity());
 
-        if (isGreaterThanZero(remainingBuyIn) &&
-                (getQuantity() - buyInQuantity > 0)) {
-            buyInQuantity = buyInQuantity + 1;
+        if (remainingBuyIn.greaterThan(Amount.ZERO) &&
+                (quantity.subtract(buyInQuantity).greaterThan(Amount.ZERO))) {
+            buyInQuantity = buyInQuantity.add(Amount.ONE);
         }
 
-        return buyInQuantity;
+        return buyInQuantity.intValue();
     }
 
     /**
      * @param remainingBuyIn
      * @return max quantity up to the remaining buy in equivalent
      */
-    int buyInQuantityUpToMax(BigDecimal remainingBuyIn) {
-        int maxQuantity = divideFor(remainingBuyIn, getDenomination()).intValue();
+    Amount buyInQuantityUpToMax(Amount remainingBuyIn) {
+        Amount maxQuantity = Amount.of(remainingBuyIn.divide(getDenomination()));
 
-        int quantity = getQuantity();
-        if (maxQuantity > 0 && maxQuantity < quantity) {
+        Amount quantity = Amount.of(getQuantity());
+        if (maxQuantity.greaterThan(Amount.ZERO)
+                && maxQuantity.lessThan(quantity)) {
             quantity = maxQuantity;
         }
         return quantity;
@@ -92,16 +113,16 @@ public class PokerChip {
      * @param overBuyIn
      * @return max quantity up to over buy in equivalent
      */
-    public int overBuyInQuantityUpToMax(BigDecimal overBuyIn) {
-        int maxQuantity = divideFor(overBuyIn, getDenomination()).intValue();
+    public int overBuyInQuantityUpToMax(Amount overBuyIn) {
+        Amount maxQuantity = Amount.of(overBuyIn.divide(getDenomination()));
 
-        if (maxQuantity > 0) {
+        if (maxQuantity.greaterThan(Amount.ZERO)) {
             int buyInQuantity = getBuyInQuantity();
-            if (maxQuantity > buyInQuantity) {
-                maxQuantity = buyInQuantity;
+            if (maxQuantity.greaterThan(buyInQuantity)) {
+                maxQuantity = Amount.of(buyInQuantity);
             }
         }
-        return maxQuantity;
+        return maxQuantity.intValue();
     }
 
     /**
@@ -121,14 +142,14 @@ public class PokerChip {
     /**
      * @param denomination the _denomination to set
      */
-    void setDenomination(final BigDecimal denomination) {
+    void setDenomination(final Amount denomination) {
         _denomination = denomination;
     }
 
     /**
      * @return the _denomination
      */
-    public final BigDecimal getDenomination() {
+    public final Amount getDenomination() {
         return _denomination;
     }
 
@@ -136,7 +157,7 @@ public class PokerChip {
      * @return Denomination in dollars formatted
      */
     public final String getDenominationInDollars() {
-        return getDollarAmount(getDenomination());
+        return getDenomination().getDollarAmount();
     }
 
     /**
@@ -146,15 +167,15 @@ public class PokerChip {
     final void setQuantity(final int quantity) throws PokerChipException {
 
         if (quantity + getQuantitySetAside() < 1) {
-            throw new PokerChipException(String.format("Unable to set a quantity of [%d] which together with the quantitySetAside is less than 1", quantity));
+            throw new PokerChipException(MessageFormat.format("Unable to set a quantity of [{0}] which together with the quantitySetAside is less than 1", quantity));
         }
 
-        if (quantity < _buyInQuantity) {
-            throw new PokerChipException(String.format("Unable to set a quantity of [%d] which is less than the current buyInQuantity of [%d]", quantity, _buyInQuantity));
+        if (quantity < getBuyInQuantity()) {
+            throw new PokerChipException(MessageFormat.format("Unable to set a quantity of [{0}] which is less than the current buyInQuantity of [%d]", quantity, getBuyInQuantity()));
         }
 
         _quantity = quantity;
-        _quantityRemaining = _quantity - _buyInQuantity;
+        setQuantityRemaining(getQuantity() - getBuyInQuantity());
     }
 
     /**
@@ -170,13 +191,13 @@ public class PokerChip {
      */
     public void setBuyInQuantity(int buyInQuantity) throws PokerChipException {
 
-        if (buyInQuantity > _quantity) {
+        if (buyInQuantity > getQuantity()) {
             throw new PokerChipException(MessageFormat.format("Unable to set a buyInQuantity of {0}, which is greater than the current available quantity of {1}.",
-                    _buyInQuantity, _quantity));
+                    getBuyInQuantity(), getQuantity()));
         }
 
         _buyInQuantity = buyInQuantity;
-        _quantityRemaining = _quantity - buyInQuantity;
+        setQuantityRemaining(getQuantity() - getBuyInQuantity());
     }
 
     /**
@@ -189,8 +210,8 @@ public class PokerChip {
     /**
      * @return buyInAmount
      */
-    BigDecimal getBuyInAmount() {
-        return getDenomination().multiply(new BigDecimal(getBuyInQuantity()));
+    Amount getBuyInAmount() {
+        return getDenomination().multiply(getBuyInQuantity());
     }
 
     /**
@@ -198,6 +219,10 @@ public class PokerChip {
      */
     int getQuantityRemaining() {
         return _quantityRemaining;
+    }
+
+    private int getTotalAvailableQuantity() {
+        return getQuantity() + getQuantitySetAside();
     }
 
     /**
@@ -213,21 +238,23 @@ public class PokerChip {
 
     public void setQuantitySetAside(int quantitySetAside) throws PokerChipException {
 
-        if (quantitySetAside > (_quantitySetAside + _quantity)) {
-            throw new PokerChipException(String.format("Unable to set a quantitySetAside of [%d] which is greater than the current available quantity of [%d]", _quantitySetAside, _quantity));
+        if (quantitySetAside > getTotalAvailableQuantity()) {
+            throw new PokerChipException(MessageFormat.format("Unable to set a quantitySetAside of [{0}] which is greater than the current available quantity of [%d]", getQuantitySetAside(), getQuantity()));
         }
 
-        if (quantitySetAside < _quantitySetAside) {
-            setQuantity(_quantity + (_quantitySetAside - quantitySetAside));
-        } else if (quantitySetAside > _quantitySetAside) {
-            setQuantity(_quantity - (quantitySetAside - _quantitySetAside));
+        if (quantitySetAside < getQuantitySetAside()) {
+            int quantityToSetAsideDiff = getQuantitySetAside() - quantitySetAside;
+            setQuantity(getQuantity() + quantityToSetAsideDiff);
+        } else if (quantitySetAside > getQuantitySetAside()) {
+            int quantityToSetAsideDiff = quantitySetAside - getQuantitySetAside();
+            setQuantity(getQuantity() - quantityToSetAsideDiff);
         }
         _quantitySetAside = quantitySetAside;
     }
 
     public void applyQuantitySetAside() throws PokerChipException {
-        if (getQuantitySetAside() > 0) {
-            int quantitySetAside = getQuantitySetAside();
+        int quantitySetAside = getQuantitySetAside();
+        if (quantitySetAside > 0) {
             setQuantitySetAside(0);
             setBuyInQuantity(getBuyInQuantity() + quantitySetAside);
         }

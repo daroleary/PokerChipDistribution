@@ -4,10 +4,8 @@ import com.solium.pcd.domain.PokerChip;
 import com.solium.pcd.domain.PokerChips;
 import com.solium.pcd.exception.CalculationException;
 import com.solium.pcd.exception.PokerChipException;
+import com.solium.pcd.math.Amount;
 import com.solium.pcd.util.Constants;
-import com.solium.pcd.util.Util;
-
-import java.math.BigDecimal;
 
 public class PokerChipDistributionForBonusOneStrategy extends PokerChipDistributionStrategyBase implements IPokerChipDistributionStrategy {
 
@@ -19,12 +17,12 @@ public class PokerChipDistributionForBonusOneStrategy extends PokerChipDistribut
 
     private PokerChips getPokerListWithBuyInOfOneForAllDenominations(final PokerChips pokerChips) throws PokerChipException {
 
-        BigDecimal initialBuyIn = new BigDecimal("0.00");
-        for (PokerChip current : pokerChips) {
-            current.setQuantitySetAside(Constants.BONUS_TWO_MIN_QUANTITY);
-            initialBuyIn = Util.roundToDecimalPlaces(initialBuyIn.add(current.getDenomination()));
+        Amount initialBuyIn = Amount.ZERO;
+        for (PokerChip pokerChip : pokerChips) {
+            pokerChip.setQuantitySetAside(Constants.BONUS_TWO_MIN_QUANTITY);
+            initialBuyIn = initialBuyIn.add(pokerChip.getDenomination());
         }
-        pokerChips.setBuyInAmount(Util.subtractFor(pokerChips.getBuyInAmount(), initialBuyIn));
+        pokerChips.setBuyInAmount(pokerChips.getBuyInAmount().subtract(initialBuyIn));
 
         return pokerChips;
     }

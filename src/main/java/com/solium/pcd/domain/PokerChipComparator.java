@@ -1,6 +1,7 @@
 package com.solium.pcd.domain;
 
-import java.math.BigDecimal;
+import com.solium.pcd.math.Amount;
+
 import java.util.Comparator;
 
 public class PokerChipComparator implements Comparator<PokerChip> {
@@ -15,8 +16,8 @@ public class PokerChipComparator implements Comparator<PokerChip> {
      * than obj2 else return (0)
      */
     public final int compare(final PokerChip obj1, final PokerChip obj2) {
-        BigDecimal denomination1 = obj1.getDenomination();
-        BigDecimal denomination2 = obj2.getDenomination();
+        Amount denomination1 = obj1.getDenomination();
+        Amount denomination2 = obj2.getDenomination();
 
         return denomination1.compareTo(denomination2);
     }

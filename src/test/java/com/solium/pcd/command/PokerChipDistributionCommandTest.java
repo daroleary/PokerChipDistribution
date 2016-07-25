@@ -1,5 +1,6 @@
 package com.solium.pcd.command;
 
+import com.google.common.collect.ImmutableList;
 import com.solium.pcd.domain.PokerChips;
 import com.solium.pcd.exception.AlgorithmException;
 import com.solium.pcd.exception.CalculationException;
@@ -8,9 +9,6 @@ import com.solium.pcd.exception.PokerChipException;
 import com.solium.pcd.util.Constants.Algorithm;
 import com.solium.pcd.util.TestCase;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -90,14 +88,14 @@ public class PokerChipDistributionCommandTest {
         assertEquals(10, actual.get(5).getBuyInQuantity());
     }
 
-    private List<String> getTestCaseFourData() {
+    private ImmutableList<String> getTestCaseFourData() {
 
-        List<String> pokerDetailsList = new ArrayList<>();
+        ImmutableList.Builder<String> pokerDetails = new ImmutableList.Builder<>();
 
-        pokerDetailsList.add("2/$1.00,3/$0.75,1/$0.10");
-        pokerDetailsList.add("1");
-        pokerDetailsList.add("$3.35");
+        pokerDetails.add("2/$1.00,3/$0.75,1/$0.10");
+        pokerDetails.add("1");
+        pokerDetails.add("$3.35");
 
-        return pokerDetailsList;
+        return pokerDetails.build();
     }
 }

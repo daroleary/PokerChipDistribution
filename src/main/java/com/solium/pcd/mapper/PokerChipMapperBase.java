@@ -5,10 +5,10 @@ import com.solium.pcd.domain.PokerChip;
 import com.solium.pcd.domain.PokerChips;
 import com.solium.pcd.exception.MapperException;
 import com.solium.pcd.exception.PokerChipException;
+import com.solium.pcd.math.Amount;
 import com.solium.pcd.util.Constants;
 import com.solium.pcd.util.Util;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -85,22 +85,26 @@ abstract class PokerChipMapperBase {
             throw new MapperException(String.format("Input chip breakdown is invalid, should be in format of 00/$0.00,.. but is %s", chipsBreakDown));
         }
 
-        List<PokerChip> list = new ArrayList<>();
+        List<PokerChip> pokerChips = new ArrayList<>();
 
         for (String chipBreakDown : chipBreakdownArray) {
             Matcher m = Constants.REGULAR_CHIP_BREAKDOWN_REGEX.matcher(chipBreakDown);
 
             if (m.find()) {
-                int quantity = Integer.parseInt(m.group(1)) / numberOfPlayers;
-                BigDecimal denomination = Util.convertAmountToBigDecimal(m.group(2));
+                int quantity = getQuantity(m.group(1), numberOfPlayers);
+                Amount denomination = Amount.of(Double.parseDouble(m.group(2)));
 
-                list.add(new PokerChip(denomination, quantity));
+                pokerChips.add(new PokerChip(denomination, quantity));
             } else {
                 System.out.println(String.format("Chip breakdown invalid, should be of the format 00/$0.00 but is [%s]", chipBreakDown));
             }
         }
 
-        return list;
+        return pokerChips;
+    }
+
+    private int getIntegerFrom(String group) {
+        return Integer.parseInt(group);
     }
 
     private final List<PokerChip> getBonusTwoChipBreakdowns(String chipsBreakDown, final int numberOfPlayers) throws MapperException, PokerChipException {
@@ -110,7 +114,7 @@ abstract class PokerChipMapperBase {
             throw new MapperException(String.format("Input chip breakdown is invalid, should be in format of 00/Color,.. but is %s", chipsBreakDown));
         }
 
-        List<PokerChip> list = new ArrayList<>();
+        List<PokerChip> pokerChips = new ArrayList<>();
 
         int denominationIndex = chipBreakdownArray.length;
 
@@ -121,25 +125,30 @@ abstract class PokerChipMapperBase {
 
                 denominationIndex--;
 
-                int quantity = Integer.parseInt(m.group(1)) / numberOfPlayers;
-                BigDecimal denomination = Constants.availableDenominations[denominationIndex];
+                int quantity = getQuantity(m.group(1), numberOfPlayers);
+                Amount denomination = Constants.DENOMINATIONS_AVAILABLE.get(denominationIndex);
                 Color color = Color.of(m.group(2));
 
-                list.add(new PokerChip(color, denomination, quantity));
+                pokerChips.add(new PokerChip(color, denomination, quantity));
             } else {
                 System.out.println(String.format("Chip breakdown invalid, should be of the format 00/Color but is [%s]", chipBreakDown));
             }
         }
 
-        return list;
+        return pokerChips;
+    }
+
+    private int getQuantity(String group, int numberOfPlayers) {
+        Amount quantity = Amount.of(getIntegerFrom(group)).divide(numberOfPlayers);
+        return quantity.intValue();
     }
 
     final PokerChips getPokerList(List<String> pokerDetails) throws MapperException, PokerChipException {
 
         Iterator<String> listItr = pokerDetails.iterator();
         String chipBreakdown = listItr.next();
-        int numberOfPlayers = Integer.parseInt(listItr.next());
-        BigDecimal buyIn = Util.convertMonetaryAmountToBigDecimal(listItr.next());
+        int numberOfPlayers = getIntegerFrom(listItr.next());
+        Amount buyIn = Amount.of(listItr.next());
 
         List<PokerChip> list = getChipBreakdowns(chipBreakdown, numberOfPlayers);
 
@@ -154,8 +163,8 @@ abstract class PokerChipMapperBase {
 
         Iterator<String> listItr = pokerDetails.iterator();
         String chipBreakdown = listItr.next();
-        int numberOfPlayers = Integer.parseInt(listItr.next());
-        BigDecimal buyIn = Util.convertMonetaryAmountToBigDecimal(listItr.next());
+        int numberOfPlayers = getIntegerFrom(listItr.next());
+        Amount buyIn = Amount.of(listItr.next());
 
         List<PokerChip> list = getBonusTwoChipBreakdowns(chipBreakdown, numberOfPlayers);
 

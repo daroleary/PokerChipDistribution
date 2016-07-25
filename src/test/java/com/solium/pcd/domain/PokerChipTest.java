@@ -1,24 +1,23 @@
 package com.solium.pcd.domain;
 
 import com.solium.pcd.exception.PokerChipException;
+import com.solium.pcd.math.Amount;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import java.math.BigDecimal;
 
 import static org.junit.Assert.assertEquals;
 
 public class PokerChipTest {
 
-    private static final BigDecimal ONE = BigDecimal.ONE;
-    private static final BigDecimal TWO = BigDecimal.valueOf(2);
-    private static final BigDecimal ZERO = BigDecimal.ZERO;
-    private static final BigDecimal THREE = BigDecimal.valueOf(3);
+    private static final Amount ZERO = Amount.ZERO;
+    private static final Amount ONE = Amount.ONE;
+    private static final Amount TWO = Amount.of(2);
+    private static final Amount THREE = Amount.of(3);
 
     @Test
     public void shouldBeValidPokerChipObject() throws PokerChipException {
 
-        PokerChip chip = new PokerChip(ONE, 1);
+        PokerChip chip = PokerChip.of(1.00, 1);
 
         assertEquals(ONE, chip.getDenomination());
         assertEquals(1, chip.getQuantity());
@@ -27,7 +26,7 @@ public class PokerChipTest {
     @Test
     public void shouldBeValidPokerChipObjectTestTwo() throws PokerChipException {
 
-        PokerChip chip = new PokerChip(Color.GREEN, ONE, 1);
+        PokerChip chip = PokerChip.of(Color.GREEN, 1.00, 1);
 
         assertEquals(ONE, chip.getDenomination());
         assertEquals(1, chip.getQuantity());
@@ -50,7 +49,7 @@ public class PokerChipTest {
     @Test
     public void shouldBeValidPokerChipObjectTestFour() throws PokerChipException {
 
-        PokerChip chip = new PokerChip(Color.GREEN, ONE, 2);
+        PokerChip chip = PokerChip.of(Color.GREEN, 1.00, 2);
         chip.setBuyInQuantity(1);
         chip.setQuantitySetAside(1);
 
@@ -65,7 +64,7 @@ public class PokerChipTest {
     @Test
     public void shouldBeValidPokerChipObjectTestFive() throws PokerChipException {
 
-        PokerChip chip = new PokerChip(Color.GREEN, ONE, 1);
+        PokerChip chip = PokerChip.of(Color.GREEN, 1, 1);
         chip.setColor(Color.BLUE);
         chip.setDenomination(TWO);
         chip.setQuantity(2);
@@ -84,13 +83,13 @@ public class PokerChipTest {
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowIllegalArgumentExceptionForConstructor() throws PokerChipException {
 
-        new PokerChip(BigDecimal.valueOf(0.00), 1);
+        PokerChip.of(0.00, 1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowIllegalArgumentExceptionForConstructorTestTwo() throws PokerChipException {
 
-        new PokerChip(ONE, 0);
+        PokerChip.of(1.00, 0);
     }
 
     @Test(expected = NullPointerException.class)
@@ -169,17 +168,17 @@ public class PokerChipTest {
     public void buyInQuantityUpToMax_maxQuantityIsZero_quantityIsOne_returnsOne() throws PokerChipException {
 
         PokerChip chip = getGreenPokerChipOfOne();
-        int overBuyInQuantity = chip.buyInQuantityUpToMax(ZERO);
-        assertEquals(1, overBuyInQuantity);
+        Amount overBuyInQuantity = chip.buyInQuantityUpToMax(ZERO);
+        assertEquals(Amount.ONE, overBuyInQuantity);
     }
 
     @Test
     public void buyInQuantityUpToMax_maxQuantityIsLessThanQuantity_returnsMaxQuantity() throws PokerChipException {
 
-        PokerChip chip = new PokerChip(Color.GREEN, ONE, 2);
+        PokerChip chip = PokerChip.of(Color.GREEN, 1.00, 2);
 
-        int overBuyInQuantity = chip.buyInQuantityUpToMax(ONE);
-        assertEquals(1, overBuyInQuantity);
+        Amount overBuyInQuantity = chip.buyInQuantityUpToMax(ONE);
+        assertEquals(ONE, overBuyInQuantity);
     }
 
     @Test
@@ -187,18 +186,18 @@ public class PokerChipTest {
 
         PokerChip chip = getGreenPokerChipOfOne();
 
-        int overBuyInQuantity = chip.buyInQuantityUpToMax(THREE);
-        assertEquals(1, overBuyInQuantity);
+        Amount overBuyInQuantity = chip.buyInQuantityUpToMax(THREE);
+        assertEquals(ONE, overBuyInQuantity);
     }
 
     @Test
     public void buyInQuantityFor_buyInQuantityIsZero_quantityIsTwo_returnsBuyInQuantityPlusOne() throws PokerChipException {
 
-        PokerChip pokerChip = Mockito.spy(new PokerChip(Color.GREEN, ONE, 2));
+        PokerChip pokerChip = Mockito.spy(PokerChip.of(Color.GREEN, 1.00, 2));
 
-        BigDecimal remainingBuyIn = ONE;
+        Amount remainingBuyIn = ONE;
         Mockito.when(pokerChip.buyInQuantityUpToMax(remainingBuyIn))
-                .thenReturn(0);
+                .thenReturn(ZERO);
 
         int buyInQuantity = pokerChip.buyInQuantityFor(remainingBuyIn);
         assertEquals(1, buyInQuantity);
@@ -207,11 +206,11 @@ public class PokerChipTest {
     @Test
     public void buyInQuantityFor_buyInQuantityIsOne_remainingBuyInIsZero_returnsBuyInQuantity() throws PokerChipException {
 
-        PokerChip pokerChip = Mockito.spy(new PokerChip(Color.GREEN, ONE, 2));
+        PokerChip pokerChip = Mockito.spy(PokerChip.of(Color.GREEN, 1.00, 2));
 
-        BigDecimal remainingBuyIn = ZERO;
+        Amount remainingBuyIn = ZERO;
         Mockito.when(pokerChip.buyInQuantityUpToMax(remainingBuyIn))
-                .thenReturn(1);
+                .thenReturn(ONE);
 
         int buyInQuantity = pokerChip.buyInQuantityFor(remainingBuyIn);
         assertEquals(1, buyInQuantity);
@@ -220,10 +219,10 @@ public class PokerChipTest {
     @Test
     public void buyInQuantityFor_buyInQuantityIsOne_quantityIsOne_returnsBuyInQuantity() throws PokerChipException {
 
-        PokerChip pokerChip = Mockito.spy(new PokerChip(Color.GREEN, ONE, 1));
+        PokerChip pokerChip = Mockito.spy(PokerChip.of(Color.GREEN, 1.00, 1));
 
         Mockito.when(pokerChip.buyInQuantityUpToMax(ONE))
-                .thenReturn(1);
+                .thenReturn(ONE);
 
         int buyInQuantity = pokerChip.buyInQuantityFor(ONE);
         assertEquals(1, buyInQuantity);
@@ -231,7 +230,7 @@ public class PokerChipTest {
 
     private PokerChip getGreenPokerChipOfOne() {
         try {
-            return new PokerChip(Color.GREEN, ONE, 1);
+            return PokerChip.of(Color.GREEN, 1.00, 1);
         } catch (PokerChipException e) {
             throw new RuntimeException(e);
         }
