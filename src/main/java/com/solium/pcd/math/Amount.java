@@ -1,8 +1,9 @@
 package com.solium.pcd.math;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
 
-public class Amount implements Comparable<Amount> {
+public class Amount implements Comparable<Amount>, Serializable {
 
     public static final Amount ZERO = of(0);
     public static final Amount ONE = of(1);

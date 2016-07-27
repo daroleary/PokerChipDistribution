@@ -54,7 +54,7 @@ public class PokerChipTest {
         chip.setQuantitySetAside(1);
 
         assertEquals(ONE, chip.getDenomination());
-        assertEquals(1, chip.getQuantity());
+        assertEquals(2, chip.getQuantity());
         assertEquals(Color.GREEN, chip.getColor());
         assertEquals(1, chip.getBuyInQuantity());
         assertEquals(0, chip.getQuantityRemaining());
@@ -132,7 +132,7 @@ public class PokerChipTest {
 
         PokerChip chip = new PokerChip(Color.GREEN, ONE, 2);
         chip.setQuantitySetAside(1);
-        assertEquals(1, chip.getQuantity());
+        assertEquals(2, chip.getQuantity());
         chip.setQuantitySetAside(3);
     }
 

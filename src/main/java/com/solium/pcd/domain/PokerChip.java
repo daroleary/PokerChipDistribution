@@ -11,7 +11,6 @@ public class PokerChip {
     private Color _color;
     private int _quantity = 0;
     private int _buyInQuantity = 0;
-    private int _quantityRemaining = 0;
     private int _quantitySetAside = 0;
     private Amount _denomination = Amount.ZERO;
 
@@ -50,7 +49,6 @@ public class PokerChip {
         setColor(color);
         setDenomination(denomination);
         setQuantity(quantity);
-        setQuantityRemaining(quantity);
     }
 
     /**
@@ -84,10 +82,10 @@ public class PokerChip {
     public int buyInQuantityFor(final Amount remainingBuyIn) {
 
         Amount buyInQuantity = buyInQuantityUpToMax(remainingBuyIn);
-        Amount quantity = Amount.of(getQuantity());
+        Amount quantityNotSetAside = Amount.of(getQuantityNotSetAside());
 
         if (remainingBuyIn.greaterThan(Amount.ZERO) &&
-                (quantity.subtract(buyInQuantity).greaterThan(Amount.ZERO))) {
+                (quantityNotSetAside.subtract(buyInQuantity).greaterThan(Amount.ZERO))) {
             buyInQuantity = buyInQuantity.add(Amount.ONE);
         }
 
@@ -101,12 +99,12 @@ public class PokerChip {
     Amount buyInQuantityUpToMax(Amount remainingBuyIn) {
         Amount maxQuantity = Amount.of(remainingBuyIn.divide(getDenomination()));
 
-        Amount quantity = Amount.of(getQuantity());
+        Amount quantityNotSetAside = Amount.of(getQuantityNotSetAside());
         if (maxQuantity.greaterThan(Amount.ZERO)
-                && maxQuantity.lessThan(quantity)) {
-            quantity = maxQuantity;
+                && maxQuantity.lessThan(quantityNotSetAside)) {
+            quantityNotSetAside = maxQuantity;
         }
-        return quantity;
+        return quantityNotSetAside;
     }
 
     /**
@@ -175,7 +173,6 @@ public class PokerChip {
         }
 
         _quantity = quantity;
-        setQuantityRemaining(getQuantity() - getBuyInQuantity());
     }
 
     /**
@@ -186,18 +183,24 @@ public class PokerChip {
     }
 
     /**
+     * @return the quantity not set aside
+     */
+    private final int getQuantityNotSetAside() {
+        return getQuantity() - getQuantitySetAside();
+    }
+
+    /**
      * @param buyInQuantity
      * @throws PokerChipException
      */
     public void setBuyInQuantity(int buyInQuantity) throws PokerChipException {
 
-        if (buyInQuantity > getQuantity()) {
+        if (buyInQuantity > (getQuantity() - getQuantitySetAside())) {
             throw new PokerChipException(MessageFormat.format("Unable to set a buyInQuantity of {0}, which is greater than the current available quantity of {1}.",
-                    getBuyInQuantity(), getQuantity()));
+                    getBuyInQuantity(), (getQuantity() - getQuantitySetAside())));
         }
 
         _buyInQuantity = buyInQuantity;
-        setQuantityRemaining(getQuantity() - getBuyInQuantity());
     }
 
     /**
@@ -218,18 +221,7 @@ public class PokerChip {
      * @return quantityRemaining
      */
     int getQuantityRemaining() {
-        return _quantityRemaining;
-    }
-
-    private int getTotalAvailableQuantity() {
-        return getQuantity() + getQuantitySetAside();
-    }
-
-    /**
-     * @param quantityRemaining
-     */
-    private void setQuantityRemaining(int quantityRemaining) {
-        _quantityRemaining = quantityRemaining;
+        return getQuantity() - (getQuantitySetAside() + getBuyInQuantity());
     }
 
     public int getQuantitySetAside() {
@@ -238,16 +230,10 @@ public class PokerChip {
 
     public void setQuantitySetAside(int quantitySetAside) throws PokerChipException {
 
-        if (quantitySetAside > getTotalAvailableQuantity()) {
-            throw new PokerChipException(MessageFormat.format("Unable to set a quantitySetAside of [{0}] which is greater than the current available quantity of [%d]", getQuantitySetAside(), getQuantity()));
-        }
-
-        if (quantitySetAside < getQuantitySetAside()) {
-            int quantityToSetAsideDiff = getQuantitySetAside() - quantitySetAside;
-            setQuantity(getQuantity() + quantityToSetAsideDiff);
-        } else if (quantitySetAside > getQuantitySetAside()) {
-            int quantityToSetAsideDiff = quantitySetAside - getQuantitySetAside();
-            setQuantity(getQuantity() - quantityToSetAsideDiff);
+        if (quantitySetAside > (getQuantity() - getQuantitySetAside())) {
+            throw new PokerChipException(MessageFormat.format("Unable to set a quantitySetAside of [{0}] which is greater than the current available quantity of [%d]",
+                    getQuantitySetAside(),
+                    (getQuantity() - getQuantitySetAside())));
         }
         _quantitySetAside = quantitySetAside;
     }
