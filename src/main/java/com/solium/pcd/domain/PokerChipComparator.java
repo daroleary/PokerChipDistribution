@@ -1,10 +1,8 @@
 package com.solium.pcd.domain;
 
-import com.solium.pcd.math.Amount;
-
 import java.util.Comparator;
 
-public class PokerChipComparator implements Comparator<PokerChip> {
+class PokerChipComparator implements Comparator<PokerChip> {
 
     /**
      * Compares two PokerChipDistribution objects to determine which one
@@ -16,8 +14,8 @@ public class PokerChipComparator implements Comparator<PokerChip> {
      * than obj2 else return (0)
      */
     public final int compare(final PokerChip obj1, final PokerChip obj2) {
-        Amount denomination1 = obj1.getDenomination();
-        Amount denomination2 = obj2.getDenomination();
+        Denomination denomination1 = obj1.getDenomination();
+        Denomination denomination2 = obj2.getDenomination();
 
         return denomination1.compareTo(denomination2);
     }

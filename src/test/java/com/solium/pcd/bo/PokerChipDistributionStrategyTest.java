@@ -1,120 +1,136 @@
 package com.solium.pcd.bo;
 
 import com.google.common.collect.ImmutableList;
-import com.solium.pcd.domain.PokerChips;
+import com.google.common.collect.ImmutableSortedMap;
+import com.solium.pcd.domain.ChipRoll;
+import com.solium.pcd.domain.Color;
+import com.solium.pcd.domain.Denomination;
+import com.solium.pcd.domain.Player;
+import com.solium.pcd.domain.PokerChip;
 import com.solium.pcd.exception.AlgorithmException;
 import com.solium.pcd.exception.CalculationException;
 import com.solium.pcd.exception.MapperException;
 import com.solium.pcd.exception.PokerChipException;
 import com.solium.pcd.mapper.PokerChipMapper;
 import com.solium.pcd.util.TestUtil;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertEquals;
 
 public class PokerChipDistributionStrategyTest {
 
-    @Test
-    public void shouldReturnOptimumDistributionForProblemOne() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
+    @Rule
+    public ExpectedException  _expectedException = ExpectedException.none();
 
-        PokerChips actual = new PokerChipDistributionStrategy()
+    @Test
+    public void calculate_withProblemOne_shouldReturnOptimumDistribution() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
+
+        Player actualPlayer = new PokerChipDistributionStrategy()
                 .calculate(new PokerChipMapper().mapFrom(getTestCaseOneData()));
 
-        assertEquals("$2.00", actual.get(0).getDenominationInDollars());
-        assertEquals(0, actual.get(0).getBuyInQuantity());
-        assertEquals("$1.00", actual.get(1).getDenominationInDollars());
-        assertEquals(1, actual.get(1).getBuyInQuantity());
-        assertEquals("$0.50", actual.get(2).getDenominationInDollars());
-        assertEquals(10, actual.get(2).getBuyInQuantity());
-        assertEquals("$0.25", actual.get(3).getDenominationInDollars());
-        assertEquals(10, actual.get(3).getBuyInQuantity());
-        assertEquals("$0.10", actual.get(4).getDenominationInDollars());
-        assertEquals(10, actual.get(4).getBuyInQuantity());
-        assertEquals("$0.05", actual.get(5).getDenominationInDollars());
-        assertEquals(10, actual.get(5).getBuyInQuantity());
+        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
+
+        assertEquals(6, pokerChipDistribution.size());
+        assertChipRoll(pokerChipDistribution, Denomination.TWO_DOLLARS, 0);
+        assertChipRoll(pokerChipDistribution, Denomination.ONE_DOLLAR, 1);
+        assertChipRoll(pokerChipDistribution, Denomination.FIFTY_CENT, 10);
+        assertChipRoll(pokerChipDistribution, Denomination.TWENTY_FIVE_CENTS, 10);
+        assertChipRoll(pokerChipDistribution, Denomination.TEN_CENTS, 10);
+        assertChipRoll(pokerChipDistribution, Denomination.FIVE_CENTS, 10);
     }
 
     @Test
-    public void shouldReturnOptimumDistributionOfMaxBuyInForProblemOne() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
+    public void calculate_withMaxBuyInForProblemOne_shouldReturnOptimumDistribution() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
 
-        PokerChips actual = new PokerChipDistributionStrategy()
+        Player actualPlayer = new PokerChipDistributionStrategy()
                 .calculate(new PokerChipMapper().mapFrom(getTestCaseTwoData()));
 
-        assertEquals("$2.00", actual.get(0).getDenominationInDollars());
-        assertEquals(5, actual.get(0).getBuyInQuantity());
-        assertEquals("$1.00", actual.get(1).getDenominationInDollars());
-        assertEquals(5, actual.get(1).getBuyInQuantity());
-        assertEquals("$0.50", actual.get(2).getDenominationInDollars());
-        assertEquals(10, actual.get(2).getBuyInQuantity());
-        assertEquals("$0.25", actual.get(3).getDenominationInDollars());
-        assertEquals(10, actual.get(3).getBuyInQuantity());
-        assertEquals("$0.10", actual.get(4).getDenominationInDollars());
-        assertEquals(10, actual.get(4).getBuyInQuantity());
-        assertEquals("$0.05", actual.get(5).getDenominationInDollars());
-        assertEquals(10, actual.get(5).getBuyInQuantity());
+        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
+
+        assertEquals(6, pokerChipDistribution.size());
+        assertChipRoll(pokerChipDistribution, Denomination.TWO_DOLLARS, 5);
+        assertChipRoll(pokerChipDistribution, Denomination.ONE_DOLLAR, 5);
+        assertChipRoll(pokerChipDistribution, Denomination.FIFTY_CENT, 10);
+        assertChipRoll(pokerChipDistribution, Denomination.TWENTY_FIVE_CENTS, 10);
+        assertChipRoll(pokerChipDistribution, Denomination.TEN_CENTS, 10);
+        assertChipRoll(pokerChipDistribution, Denomination.FIVE_CENTS, 10);
+    }
+
+
+    @Test
+    public void calculate_withMinBuyInForProblemOne_shouldReturnOptimumDistribution() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
+
+        Player actualPlayer = new PokerChipDistributionStrategy()
+                .calculate(new PokerChipMapper().mapFrom(getTestCaseThreeData()));
+
+        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
+
+        assertEquals(6, pokerChipDistribution.size());
+        assertChipRoll(pokerChipDistribution, Denomination.TWO_DOLLARS, 0);
+        assertChipRoll(pokerChipDistribution, Denomination.ONE_DOLLAR, 0);
+        assertChipRoll(pokerChipDistribution, Denomination.FIFTY_CENT, 0);
+        assertChipRoll(pokerChipDistribution, Denomination.TWENTY_FIVE_CENTS, 0);
+        assertChipRoll(pokerChipDistribution, Denomination.TEN_CENTS, 0);
+        assertChipRoll(pokerChipDistribution, Denomination.FIVE_CENTS, 1);
     }
 
     @Test
-    public void shouldReturnOptimumDistributionOfMinBuyInForProblemOne() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
-
-        PokerChips actual = new PokerChipDistributionStrategy()
-                .calculate(new PokerChipMapper().mapFrom(getTestCaseThreeData()));
-
-        assertEquals("$2.00", actual.get(0).getDenominationInDollars());
-        assertEquals(0, actual.get(0).getBuyInQuantity());
-        assertEquals("$1.00", actual.get(1).getDenominationInDollars());
-        assertEquals(0, actual.get(1).getBuyInQuantity());
-        assertEquals("$0.50", actual.get(2).getDenominationInDollars());
-        assertEquals(0, actual.get(2).getBuyInQuantity());
-        assertEquals("$0.25", actual.get(3).getDenominationInDollars());
-        assertEquals(0, actual.get(3).getBuyInQuantity());
-        assertEquals("$0.10", actual.get(4).getDenominationInDollars());
-        assertEquals(0, actual.get(4).getBuyInQuantity());
-        assertEquals("$0.05", actual.get(5).getDenominationInDollars());
-        assertEquals(1, actual.get(5).getBuyInQuantity());
-    }
-
-    @Test(expected = CalculationException.class)
-    public void shouldThrowCalculationExceptionForGreaterThanAllowedBuyInForProblemOne() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
-
+    public void calculate_withGreaterThanAllowedBuyInForProblemOne_shouldThrowCalculationException() throws Exception {
+        _expectedException.expect(CalculationException.class);
         new PokerChipDistributionStrategy()
                 .calculate(new PokerChipMapper().mapFrom(getTestCaseFourData()));
     }
 
-    @Test(expected = CalculationException.class)
-    public void shouldThrowCalculationExceptionForLessThanAllowedBuyInForProblemOne() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
-
+    @Test
+    public void calculate_withLessThanAllowedBuyInForProblemOne_shouldThrowCalculationException() throws AlgorithmException, CalculationException, MapperException, PokerChipException {
+        _expectedException.expect(CalculationException.class);
         new PokerChipDistributionStrategy()
                 .calculate(new PokerChipMapper().mapFrom(getTestCaseFiveData()));
     }
 
-    private ImmutableList<String> getTestCaseOneData() throws PokerChipException {
+    private ImmutableList<String> getTestCaseOneData() {
 
         String chipBreakdown = "50/$2.00,50/$1.00,100/$0.50,100/$0.25,100/$0.10,100/$0.05";
         return TestUtil.getPokerChipDistributionList(chipBreakdown, "$10.00", "10");
     }
 
-    private ImmutableList<String> getTestCaseTwoData() throws PokerChipException {
+    private ImmutableList<String> getTestCaseTwoData() {
 
         String chipBreakdown = "50/$2.00,50/$1.00,100/$0.50,100/$0.25,100/$0.10,100/$0.05";
         return TestUtil.getPokerChipDistributionList(chipBreakdown, "$24.00", "10");
     }
 
-    private ImmutableList<String> getTestCaseThreeData() throws PokerChipException {
+    private ImmutableList<String> getTestCaseThreeData() {
 
         String chipBreakdown = "50/$2.00,50/$1.00,100/$0.50,100/$0.25,100/$0.10,100/$0.05";
         return TestUtil.getPokerChipDistributionList(chipBreakdown, "$0.05", "10");
     }
 
-    private ImmutableList<String> getTestCaseFourData() throws PokerChipException {
+    private ImmutableList<String> getTestCaseFourData() {
 
         String chipBreakdown = "50/$2.00,50/$1.00,100/$0.50,100/$0.25,100/$0.10,100/$0.05";
         return TestUtil.getPokerChipDistributionList(chipBreakdown, "$25.00", "10");
     }
 
-    private ImmutableList<String> getTestCaseFiveData() throws PokerChipException {
+    private ImmutableList<String> getTestCaseFiveData() {
 
         String chipBreakdown = "50/$2.00,50/$1.00,100/$0.50,100/$0.25,100/$0.10,100/$0.05";
         return TestUtil.getPokerChipDistributionList(chipBreakdown, "$0.04", "10");
+    }
+
+    private void assertChipRoll(ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution,
+                                Denomination expectedDenomination,
+                                int expectedQuantity) {
+
+        PokerChip expectedPokerChip = PokerChip.newBuilder()
+                .setColor(Color.UNKNOWN)
+                .setDenomination(expectedDenomination)
+                .build();
+
+        ChipRoll chipRoll = pokerChipDistribution.get(expectedPokerChip.getDenomination());
+        assertEquals(expectedQuantity, chipRoll.getQuantity());
+        assertEquals(expectedPokerChip, chipRoll.getPokerChip());
     }
 }

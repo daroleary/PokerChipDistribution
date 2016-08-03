@@ -1,248 +1,88 @@
 package com.solium.pcd.domain;
 
 import com.google.common.base.Preconditions;
-import com.solium.pcd.exception.PokerChipException;
-import com.solium.pcd.math.Amount;
 
-import java.text.MessageFormat;
+public final class PokerChip {
 
-public class PokerChip {
+    private final Color _color;
+    private final Denomination _denomination;
 
-    private Color _color;
-    private int _quantity = 0;
-    private int _buyInQuantity = 0;
-    private int _quantitySetAside = 0;
-    private Amount _denomination = Amount.ZERO;
+    public PokerChip(Builder builder) {
 
-    /**
-     * @param denomination
-     * @param quantity
-     * @return PokerChipDistribution object
-     * @throws PokerChipException
-     */
-    public PokerChip(final Amount denomination, final int quantity) throws PokerChipException {
-        this(Color.UNKNOWN, denomination, quantity);
-    }
+        Color color = builder._color;
+        Denomination denomination = builder._denomination;
 
-    /**
-     * @param color
-     * @param denomination
-     * @param quantity
-     * @return PokerChip object
-     * @throws PokerChipException
-     */
-    public PokerChip(final Color color,
-                     final Amount denomination,
-                     final int quantity) throws PokerChipException {
+        Preconditions.checkNotNull(color, "Colour must not be null.");
+        Preconditions.checkNotNull(denomination, "Denomiation must not be null.");
 
-        Preconditions.checkNotNull(color, "Inputted colour must not be null.");
-        Preconditions.checkNotNull(denomination, "Inputted denomiation must not be null.");
-
-        if (denomination.lessThanOrEqual(Amount.ZERO)) {
-            throw new IllegalArgumentException(MessageFormat.format("Inputted denomiation must be greater than zero, actual is [{0}].", denomination.toString()));
-        }
-
-        if (quantity <= 0) {
-            throw new IllegalArgumentException(MessageFormat.format("Inputted quantity must be greater than zero, actual is [{0}].", quantity));
-        }
-
-        setColor(color);
-        setDenomination(denomination);
-        setQuantity(quantity);
-    }
-
-    /**
-     * @param denomination
-     * @param quantity
-     * @return
-     * @throws PokerChipException
-     */
-    static PokerChip of(final double denomination,
-                        final int quantity) throws PokerChipException {
-        return new PokerChip(Amount.of(denomination), quantity);
-    }
-
-    /**
-     * @param color
-     * @param denomination
-     * @param quantity
-     * @return
-     * @throws PokerChipException
-     */
-    static PokerChip of(final Color color,
-                        final double denomination,
-                        final int quantity) throws PokerChipException {
-        return new PokerChip(color, Amount.of(denomination), quantity);
-    }
-
-    /**
-     * @param remainingBuyIn
-     * @return calculated buyInQuantity
-     */
-    public int buyInQuantityFor(final Amount remainingBuyIn) {
-
-        Amount buyInQuantity = buyInQuantityUpToMax(remainingBuyIn);
-        Amount quantityNotSetAside = Amount.of(getQuantityNotSetAside());
-
-        if (remainingBuyIn.greaterThan(Amount.ZERO) &&
-                (quantityNotSetAside.subtract(buyInQuantity).greaterThan(Amount.ZERO))) {
-            buyInQuantity = buyInQuantity.add(Amount.ONE);
-        }
-
-        return buyInQuantity.intValue();
-    }
-
-    /**
-     * @param remainingBuyIn
-     * @return max quantity up to the remaining buy in equivalent
-     */
-    Amount buyInQuantityUpToMax(Amount remainingBuyIn) {
-        Amount maxQuantity = Amount.of(remainingBuyIn.divide(getDenomination()));
-
-        Amount quantityNotSetAside = Amount.of(getQuantityNotSetAside());
-        if (maxQuantity.greaterThan(Amount.ZERO)
-                && maxQuantity.lessThan(quantityNotSetAside)) {
-            quantityNotSetAside = maxQuantity;
-        }
-        return quantityNotSetAside;
-    }
-
-    /**
-     * @param overBuyIn
-     * @return max quantity up to over buy in equivalent
-     */
-    public int overBuyInQuantityUpToMax(Amount overBuyIn) {
-        Amount maxQuantity = Amount.of(overBuyIn.divide(getDenomination()));
-
-        if (maxQuantity.greaterThan(Amount.ZERO)) {
-            int buyInQuantity = getBuyInQuantity();
-            if (maxQuantity.greaterThan(buyInQuantity)) {
-                maxQuantity = Amount.of(buyInQuantity);
-            }
-        }
-        return maxQuantity.intValue();
-    }
-
-    /**
-     * @param color the _color to set
-     */
-    final void setColor(final Color color) {
         _color = color;
-    }
-
-    /**
-     * @return the _color
-     */
-    public final Color getColor() {
-        return _color;
-    }
-
-    /**
-     * @param denomination the _denomination to set
-     */
-    void setDenomination(final Amount denomination) {
         _denomination = denomination;
     }
 
-    /**
-     * @return the _denomination
-     */
-    public final Amount getDenomination() {
+    public Color getColor() {
+        return _color;
+    }
+
+    public Denomination getDenomination() {
         return _denomination;
     }
 
-    /**
-     * @return Denomination in dollars formatted
-     */
-    public final String getDenominationInDollars() {
-        return getDenomination().getDollarAmount();
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
-    /**
-     * @param quantity the quantity to set
-     * @throws PokerChipException
-     */
-    final void setQuantity(final int quantity) throws PokerChipException {
+    public static class Builder {
+        private Color _color;
+        private Denomination _denomination;
 
-        if (quantity + getQuantitySetAside() < 1) {
-            throw new PokerChipException(MessageFormat.format("Unable to set a quantity of [{0}] which together with the quantitySetAside is less than 1", quantity));
+        private Builder() {
+            _color = Color.UNKNOWN;
         }
 
-        if (quantity < getBuyInQuantity()) {
-            throw new PokerChipException(MessageFormat.format("Unable to set a quantity of [{0}] which is less than the current buyInQuantity of [%d]", quantity, getBuyInQuantity()));
+        public Builder setColor(Color color) {
+            _color = color;
+            return this;
         }
 
-        _quantity = quantity;
-    }
-
-    /**
-     * @return the quantity
-     */
-    public final int getQuantity() {
-        return _quantity;
-    }
-
-    /**
-     * @return the quantity not set aside
-     */
-    private final int getQuantityNotSetAside() {
-        return getQuantity() - getQuantitySetAside();
-    }
-
-    /**
-     * @param buyInQuantity
-     * @throws PokerChipException
-     */
-    public void setBuyInQuantity(int buyInQuantity) throws PokerChipException {
-
-        if (buyInQuantity > (getQuantity() - getQuantitySetAside())) {
-            throw new PokerChipException(MessageFormat.format("Unable to set a buyInQuantity of {0}, which is greater than the current available quantity of {1}.",
-                    getBuyInQuantity(), (getQuantity() - getQuantitySetAside())));
+        public Builder setDenomination(Denomination denomination) {
+            _denomination = denomination;
+            return this;
         }
 
-        _buyInQuantity = buyInQuantity;
-    }
-
-    /**
-     * @return buyInQuantity
-     */
-    public int getBuyInQuantity() {
-        return _buyInQuantity;
-    }
-
-    /**
-     * @return buyInAmount
-     */
-    Amount getBuyInAmount() {
-        return getDenomination().multiply(getBuyInQuantity());
-    }
-
-    /**
-     * @return quantityRemaining
-     */
-    int getQuantityRemaining() {
-        return getQuantity() - (getQuantitySetAside() + getBuyInQuantity());
-    }
-
-    public int getQuantitySetAside() {
-        return _quantitySetAside;
-    }
-
-    public void setQuantitySetAside(int quantitySetAside) throws PokerChipException {
-
-        if (quantitySetAside > (getQuantity() - getQuantitySetAside())) {
-            throw new PokerChipException(MessageFormat.format("Unable to set a quantitySetAside of [{0}] which is greater than the current available quantity of [%d]",
-                    getQuantitySetAside(),
-                    (getQuantity() - getQuantitySetAside())));
+        private Builder(PokerChip pokerChip) {
+            _color = pokerChip.getColor();
+            _denomination = pokerChip.getDenomination();
         }
-        _quantitySetAside = quantitySetAside;
+
+        public PokerChip build() {
+            return new PokerChip(this);
+        }
     }
 
-    public void applyQuantitySetAside() throws PokerChipException {
-        int quantitySetAside = getQuantitySetAside();
-        if (quantitySetAside > 0) {
-            setQuantitySetAside(0);
-            setBuyInQuantity(getBuyInQuantity() + quantitySetAside);
-        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PokerChip pokerChip = (PokerChip) o;
+
+        if (_color != pokerChip._color) return false;
+        return _denomination == pokerChip._denomination;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = _color != null ? _color.hashCode() : 0;
+        result = 31 * result + (_denomination != null ? _denomination.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "PokerChip{" +
+                "color=" + _color +
+                ", denomination=" + _denomination +
+                '}';
     }
 }

@@ -2,7 +2,7 @@ package com.solium.pcd.main;
 
 import com.google.common.collect.ImmutableList;
 import com.solium.pcd.command.PokerChipDistributionCommand;
-import com.solium.pcd.domain.PokerChips;
+import com.solium.pcd.domain.Player;
 import com.solium.pcd.exception.AlgorithmException;
 import com.solium.pcd.exception.CalculationException;
 import com.solium.pcd.exception.MapperException;
@@ -30,7 +30,7 @@ public class PokerDistributionAssignment {
         }
     }
 
-    static PokerChips optimumPokerChipDistributionFor(String fileName) {
+    static Player optimumPokerChipDistributionFor(String fileName) {
         try {
             return new PokerChipDistributionCommand()
                     .execute(readFileAsList(fileName));

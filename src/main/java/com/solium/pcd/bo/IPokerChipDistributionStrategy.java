@@ -1,10 +1,11 @@
 package com.solium.pcd.bo;
 
-import com.solium.pcd.domain.PokerChips;
+import com.solium.pcd.domain.Player;
+import com.solium.pcd.domain.PokerTable;
 import com.solium.pcd.exception.CalculationException;
 import com.solium.pcd.exception.PokerChipException;
 
 public interface IPokerChipDistributionStrategy {
 
-    PokerChips calculate(PokerChips list) throws CalculationException, PokerChipException;
+    Player calculate(PokerTable pokerTable) throws CalculationException, PokerChipException;
 }

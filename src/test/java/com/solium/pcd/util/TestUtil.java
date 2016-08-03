@@ -10,7 +10,7 @@ public class TestUtil {
 
     public static ImmutableList<String> getPokerChipDistributionList(final String chipBreakdown,
                                                                      final String buyInAmount,
-                                                                     final String playerCount) throws PokerChipException {
+                                                                     final String playerCount) {
 
         ImmutableList.Builder<String> pokerChipsInfo = new ImmutableList.Builder<>();
         pokerChipsInfo.add(chipBreakdown);
@@ -23,7 +23,7 @@ public class TestUtil {
     public static ImmutableList<String> getPokerChipDistributionListForBonusOneAndTwo(final String problemType,
                                                                                       final String chipBreakdown,
                                                                                       final String buyInAmount,
-                                                                                      final String playerCount) throws PokerChipException {
+                                                                                      final String playerCount) {
 
         ImmutableList.Builder<String> pokerChipsInfo = new ImmutableList.Builder<>();
         pokerChipsInfo.add(problemType);

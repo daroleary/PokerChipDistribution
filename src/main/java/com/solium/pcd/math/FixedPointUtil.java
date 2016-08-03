@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 class FixedPointUtil {
 
     private static final long UNIT_MULTIPLIER = 1000000;  //10 ^ SCALE_FACTOR
-    private static final int MONETARY_CHARACTER_OFFSET_INDEX = 1;
 
     private static final double MAX_VALUE_DOUBLE = ((double) Long.MAX_VALUE) / ((double) UNIT_MULTIPLIER);
     private static final long MAX_VALUE_LONG = Long.MAX_VALUE / UNIT_MULTIPLIER;
@@ -38,7 +37,8 @@ class FixedPointUtil {
 
     static long getValueInMillionthsFromString(final String denomination) {
 
-        double value = new BigDecimal(denomination.substring(MONETARY_CHARACTER_OFFSET_INDEX)).doubleValue();
+        String denominationWithoutCurrency = denomination.replace("$", "");
+        double value = new BigDecimal(denominationWithoutCurrency).doubleValue();
         return getValueInMillionthsFromDouble(value);
     }
 
