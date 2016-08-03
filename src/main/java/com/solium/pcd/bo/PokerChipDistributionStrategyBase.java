@@ -39,7 +39,7 @@ abstract class PokerChipDistributionStrategyBase {
 
         return Player.newBuilder()
                 .setAlgorithm(pokerTable.getAlgorithm())
-                .setPokerChipDistribution(selectedChips)
+                .setPokerChipDistribution(reversePokerChipDistribution(selectedChips))
                 .build();
     }
 
@@ -52,7 +52,14 @@ abstract class PokerChipDistributionStrategyBase {
                 applyQuantitySetAsideFor(player.getPokerChipDistribution());
 
         return player.toBuilder()
-                .setPokerChipDistribution(pokerChipCollectionWithQuantitySetAside)
+                .setPokerChipDistribution(reversePokerChipDistribution(pokerChipCollectionWithQuantitySetAside))
+                .build();
+    }
+
+    private ImmutableSortedMap<Denomination, ChipRoll> reversePokerChipDistribution(ImmutableSortedMap<Denomination, ChipRoll> selectedChips) {
+        return new ImmutableSortedMap.Builder<Denomination, ChipRoll>(
+                Ordering.from(new DenominationComparator()).reversed())
+                .putAll(selectedChips)
                 .build();
     }
 
