@@ -1,7 +1,6 @@
 package com.solium.pcd.domain;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.solium.pcd.math.Amount;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -24,7 +23,7 @@ public class PokerTableTest {
     @Test
     public void build_withValidPokerTable_returnsPokerChipCollectionWithBuyInOfOne() {
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = getPokerChipDistribution();
+        ImmutableList<ChipRoll> pokerChipDistribution = getPokerChipDistribution();
 
         PokerTable pokerTable = PokerTable.newBuilder()
                 .setAlgorithm(Algorithm.BASIC)
@@ -40,10 +39,10 @@ public class PokerTableTest {
     private List<Object[]> getInvalidDataForPokerTable() {
 
         final ImmutableList.Builder<Object[]> cases = ImmutableList.builder();
-        cases.add(new Object[]{"Algorithm of null", null, null, ImmutableSortedMap.<Denomination, ChipRoll>of(), NullPointerException.class, "Algorithm must not be null."});
-        cases.add(new Object[]{"Buy in of null", Algorithm.BASIC, null, ImmutableSortedMap.<Denomination, ChipRoll>of(), NullPointerException.class, "Buy in must not be null."});
+        cases.add(new Object[]{"Algorithm of null", null, null, ImmutableList.<ChipRoll>of(), NullPointerException.class, "Algorithm must not be null."});
+        cases.add(new Object[]{"Buy in of null", Algorithm.BASIC, null, ImmutableList.<ChipRoll>of(), NullPointerException.class, "Buy in must not be null."});
         cases.add(new Object[]{"Poker chip collection of null", Algorithm.BONUS_ONE, 1.00, null, NullPointerException.class, "Poker chip collection must not be null."});
-        cases.add(new Object[]{"Buy in is minus 0.01", Algorithm.BONUS_TWO, -0.01, ImmutableSortedMap.<Denomination, ChipRoll>of(), IllegalArgumentException.class, "Buy in must be greater or equal than zero"});
+        cases.add(new Object[]{"Buy in is minus 0.01", Algorithm.BONUS_TWO, -0.01, ImmutableList.<ChipRoll>of(), IllegalArgumentException.class, "Buy in must be greater or equal than zero"});
         return cases.build();
     }
 
@@ -54,7 +53,7 @@ public class PokerTableTest {
     public <E extends Exception> void build_withParameters_throwsException(@SuppressWarnings("UnusedParameters") String testName,
                                                                            Algorithm algorithm,
                                                                            Double buyIn,
-                                                                           ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection,
+                                                                           ImmutableList<ChipRoll> pokerChipCollection,
                                                                            Class<E> exception,
                                                                            String expectedExceptionMessage) {
 
@@ -67,11 +66,8 @@ public class PokerTableTest {
                 .build();
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> getPokerChipDistribution() {
-        ChipRoll pokerChip = getPokerChip();
-
-        return ImmutableSortedMap.of(pokerChip.getPokerChip().getDenomination(),
-                                     pokerChip);
+    private ImmutableList<ChipRoll> getPokerChipDistribution() {
+        return ImmutableList.of(getPokerChip());
     }
 
     private ChipRoll getPokerChip() {

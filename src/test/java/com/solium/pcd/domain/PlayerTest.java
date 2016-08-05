@@ -1,6 +1,6 @@
 package com.solium.pcd.domain;
 
-import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,7 +15,7 @@ public class PlayerTest {
     @Test
     public void build_withValidPlayer_returnsPlayerWithExpectedPokerChipDistribution() {
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = getPokerChipDistribution();
+        ImmutableList<ChipRoll> pokerChipDistribution = getPokerChipDistribution();
 
         Player player = Player.newBuilder()
                 .setAlgorithm(Algorithm.BASIC)
@@ -37,11 +37,8 @@ public class PlayerTest {
                 .build();
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> getPokerChipDistribution() {
-        ChipRoll pokerChip = getPokerChip();
-
-        return ImmutableSortedMap.of(pokerChip.getPokerChip().getDenomination(),
-                                     pokerChip);
+    private ImmutableList<ChipRoll> getPokerChipDistribution() {
+        return ImmutableList.of(getPokerChip());
     }
 
     private ChipRoll getPokerChip() {

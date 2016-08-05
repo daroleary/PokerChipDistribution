@@ -1,12 +1,10 @@
 package com.solium.pcd.bo;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.solium.pcd.domain.Algorithm;
 import com.solium.pcd.domain.ChipRoll;
 import com.solium.pcd.domain.Color;
 import com.solium.pcd.domain.Denomination;
-import com.solium.pcd.domain.DenominationComparator;
 import com.solium.pcd.domain.PokerChip;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -28,13 +26,13 @@ public class PokerChipDistributionStrategyBaseTest {
 
     private List<Object[]> getValidDataForSetAside() {
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipRollsBeforeSetAside =
-                denominationToChipRoll(chipRollFrom(5, Denomination.ONE_CENT),
-                                       chipRollFrom(3, Denomination.FIVE_CENTS));
+        ImmutableList<ChipRoll> pokerChipRollsBeforeSetAside =
+                ImmutableList.of(chipRollFrom(5, Denomination.ONE_CENT),
+                                 chipRollFrom(3, Denomination.FIVE_CENTS));
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipRollsAfterSetAside =
-                denominationToChipRoll(chipRollFrom(4, Denomination.ONE_CENT),
-                                       chipRollFrom(2, Denomination.FIVE_CENTS));
+        ImmutableList<ChipRoll> pokerChipRollsAfterSetAside =
+                ImmutableList.of(chipRollFrom(4, Denomination.ONE_CENT),
+                                 chipRollFrom(2, Denomination.FIVE_CENTS));
 
         final ImmutableList.Builder<Object[]> cases = ImmutableList.builder();
         cases.add(new Object[]{"1 set aside for all chipRolls", Algorithm.BONUS_ONE, pokerChipRollsBeforeSetAside, pokerChipRollsAfterSetAside});
@@ -47,12 +45,12 @@ public class PokerChipDistributionStrategyBaseTest {
     @Parameters(method = "getValidDataForSetAside")
     public void setPokerChipsAsideIfBonusOneAlgorithm_withParameters_returnsCorrectPokerChipsSetAside(@SuppressWarnings("UnusedParameters") String testName,
                                                                                                       Algorithm algorithm,
-                                                                                                      ImmutableSortedMap<Denomination, ChipRoll> denominationToChipRolls,
-                                                                                                      ImmutableSortedMap<Denomination, ChipRoll> expectedChipRollsSetAside) {
+                                                                                                      ImmutableList<ChipRoll> denominationToChipRolls,
+                                                                                                      ImmutableList<ChipRoll> expectedChipRollsSetAside) {
 
         TestPokerChipDistributionStrategyBase pokerChipDistributionStrategyBase = getTestPokerChipDistributionStrategyBase();
 
-        ImmutableSortedMap<Denomination, ChipRoll> actualDenominationToChipRollSetAside =
+        ImmutableList<ChipRoll> actualDenominationToChipRollSetAside =
                 pokerChipDistributionStrategyBase.setPokerChipsAsideIfBonusOneAlgorithm(denominationToChipRolls, 1);
         assertEquals(expectedChipRollsSetAside, actualDenominationToChipRollSetAside);
     }
@@ -60,8 +58,8 @@ public class PokerChipDistributionStrategyBaseTest {
     @Test
     public void setPokerChipsAsideIfBonusOneAlgorithm_insufficientQuantityToSetAside_throwsIllegalArgumentException() {
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipRollsAfterSetAside =
-                denominationToChipRoll(chipRollFrom(1, Denomination.ONE_CENT));
+        ImmutableList<ChipRoll> pokerChipRollsAfterSetAside =
+                ImmutableList.of(chipRollFrom(1, Denomination.ONE_CENT));
 
         TestPokerChipDistributionStrategyBase pokerChipDistributionStrategyBase = getTestPokerChipDistributionStrategyBase();
 
@@ -81,18 +79,6 @@ public class PokerChipDistributionStrategyBaseTest {
                 .setQuantity(quantity)
                 .setPokerChip(pokerChip)
                 .build();
-    }
-
-    private ImmutableSortedMap<Denomination, ChipRoll> denominationToChipRoll(ChipRoll... chipRolls) {
-        ImmutableSortedMap.Builder<Denomination, ChipRoll> pokerChipRollsAfterSetAside
-                = new ImmutableSortedMap.Builder<>(new DenominationComparator());
-
-        for (ChipRoll chipRoll : chipRolls) {
-            PokerChip pokerChip = chipRoll.getPokerChip();
-            pokerChipRollsAfterSetAside.put(pokerChip.getDenomination(), chipRoll);
-        }
-
-        return pokerChipRollsAfterSetAside.build();
     }
 
     private TestPokerChipDistributionStrategyBase getTestPokerChipDistributionStrategyBase() {

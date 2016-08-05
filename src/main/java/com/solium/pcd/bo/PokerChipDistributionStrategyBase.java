@@ -1,11 +1,11 @@
 package com.solium.pcd.bo;
 
-import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.solium.pcd.contract.Contract;
 import com.solium.pcd.domain.ChipRoll;
+import com.solium.pcd.domain.ChipRollComparator;
 import com.solium.pcd.domain.Denomination;
-import com.solium.pcd.domain.DenominationComparator;
 import com.solium.pcd.domain.Player;
 import com.solium.pcd.domain.PokerChip;
 import com.solium.pcd.domain.PokerTable;
@@ -13,6 +13,7 @@ import com.solium.pcd.exception.CalculationException;
 import com.solium.pcd.exception.PokerChipException;
 import com.solium.pcd.math.Amount;
 import com.solium.pcd.util.Constants;
+import com.solium.pcd.util.ImmutableListCollector;
 
 import java.text.MessageFormat;
 
@@ -22,7 +23,7 @@ abstract class PokerChipDistributionStrategyBase {
 
         Amount remainingBuyIn = pokerTable.getBuyIn();
 
-        ImmutableSortedMap<Denomination, ChipRoll> selectedChips =
+        ImmutableList<ChipRoll> selectedChips =
                 applyInitialBuyInFor(pokerTable.getPokerChipCollection(), remainingBuyIn);
 
         remainingBuyIn = remainingBuyIn.subtract(getTotalAmountFrom(selectedChips));
@@ -48,7 +49,7 @@ abstract class PokerChipDistributionStrategyBase {
 
         Player player = getOptimumDistribution(bonusOnePokerTable);
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollectionWithQuantitySetAside =
+        ImmutableList<ChipRoll> pokerChipCollectionWithQuantitySetAside =
                 applyQuantitySetAsideFor(player.getPokerChipDistribution());
 
         return player.toBuilder()
@@ -56,30 +57,29 @@ abstract class PokerChipDistributionStrategyBase {
                 .build();
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> reversePokerChipDistribution(ImmutableSortedMap<Denomination, ChipRoll> selectedChips) {
-        return new ImmutableSortedMap.Builder<Denomination, ChipRoll>(
-                Ordering.from(new DenominationComparator()).reversed())
-                .putAll(selectedChips)
-                .build();
+    private ImmutableList<ChipRoll> reversePokerChipDistribution(ImmutableList<ChipRoll> selectedChips) {
+        return selectedChips.stream()
+                .sorted(Ordering.from(new ChipRollComparator()).reverse())
+                .collect(new ImmutableListCollector<>());
     }
 
 
-    private Amount getTotalAmountFrom(ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection) {
-        Amount totalQuantity = Amount.ZERO;
-        for (ChipRoll chipRoll : pokerChipCollection.values()) {
-            Amount denomination = chipRoll.getPokerChip().getDenomination().getAmount();
-            totalQuantity = totalQuantity.add(denomination.multiply(chipRoll.getQuantity()));
-        }
-        return totalQuantity;
+    private Amount getTotalAmountFrom(ImmutableList<ChipRoll> chipRolls) {
+        return chipRolls.stream()
+                .map(cr -> {
+                    final Amount amount = cr.getPokerChip().getDenomination().getAmount();
+                    return amount.multiply(cr.getQuantity());
+                })
+                .reduce(Amount.ZERO, Amount::add);
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> applyInitialBuyInFor(ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection,
-                                                                            Amount remainingBuyIn) {
+    private ImmutableList<ChipRoll> applyInitialBuyInFor(ImmutableList<ChipRoll> chipRolls,
+                                                         Amount remainingBuyIn) {
 
-        ImmutableSortedMap.Builder<Denomination, ChipRoll> selectedChips = new ImmutableSortedMap.Builder<>(new DenominationComparator());
+        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
 
         Amount buyInRemaining = remainingBuyIn;
-        for (ChipRoll chipRoll : pokerChipCollection.values()) {
+        for (ChipRoll chipRoll : chipRolls) {
             PokerChip pokerChip = chipRoll.getPokerChip();
 
             int buyInQuantity = buyInQuantityFor(chipRoll, buyInRemaining);
@@ -88,31 +88,23 @@ abstract class PokerChipDistributionStrategyBase {
                     .setPokerChip(pokerChip)
                     .build();
 
-            Denomination denomination = pokerChip.getDenomination();
-            selectedChips.put(denomination, selectedChipRoll);
-            buyInRemaining = buyInRemaining.subtract(denomination.getAmount().multiply(buyInQuantity));
+            selectedChips.add(selectedChipRoll);
+            buyInRemaining = buyInRemaining.subtract(pokerChip.getDenomination().getAmount().multiply(buyInQuantity));
         }
         return selectedChips.build();
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> takeOverBuyInToZeroFor(ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection,
-                                                                              Amount remainingBuyIn) throws PokerChipException {
+    private ImmutableList<ChipRoll> takeOverBuyInToZeroFor(ImmutableList<ChipRoll> chipRolls,
+                                                           Amount remainingBuyIn) throws PokerChipException {
         if (remainingBuyIn.greaterThanOrEqual(Amount.ZERO)) {
-            return pokerChipCollection;
+            return chipRolls;
         }
 
-        ImmutableSortedMap.Builder<Denomination, ChipRoll> selectedChips = new ImmutableSortedMap.Builder<>(
-                new DenominationComparator());
+        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
 
         Amount overBuyIn = remainingBuyIn.abs();
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollectionInReverse =
-                new ImmutableSortedMap.Builder<Denomination, ChipRoll>(Ordering.from(new DenominationComparator())
-                                                                               .reverse())
-                        .putAll(pokerChipCollection)
-                        .build();
-
-        for (ChipRoll chipRoll : pokerChipCollectionInReverse.values()) {
+        for (ChipRoll chipRoll : chipRolls.reverse()) {
             PokerChip pokerChip = chipRoll.getPokerChip();
 
             int selectedQuantity = chipRoll.getQuantity();
@@ -130,7 +122,7 @@ abstract class PokerChipDistributionStrategyBase {
                     .setPokerChip(pokerChip)
                     .build();
 
-            selectedChips.put(pokerChip.getDenomination(), selectedChipRoll);
+            selectedChips.add(selectedChipRoll);
         }
         return selectedChips.build();
     }
@@ -173,13 +165,11 @@ abstract class PokerChipDistributionStrategyBase {
         return maxQuantity.intValue();
     }
 
-    ImmutableSortedMap<Denomination, ChipRoll> setPokerChipsAsideIfBonusOneAlgorithm(ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection,
-                                                                                     int quantityToSetAside) {
+    ImmutableList<ChipRoll> setPokerChipsAsideIfBonusOneAlgorithm(ImmutableList<ChipRoll> chipRolls,
+                                                                  int quantityToSetAside) {
 
-        ImmutableSortedMap.Builder<Denomination, ChipRoll> selectedChips
-                = new ImmutableSortedMap.Builder<>(new DenominationComparator());
-
-        for (ChipRoll chipRoll : pokerChipCollection.values()) {
+        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
+        for (ChipRoll chipRoll : chipRolls) {
             PokerChip pokerChip = chipRoll.getPokerChip();
             Denomination denomination = pokerChip.getDenomination();
 
@@ -194,42 +184,41 @@ abstract class PokerChipDistributionStrategyBase {
                     .setPokerChip(pokerChip)
                     .setQuantity(quantity - quantityToSetAside)
                     .build();
-            selectedChips.put(denomination, chipRollToSetAside);
+            selectedChips.add(chipRollToSetAside);
         }
 
         return selectedChips.build();
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> applyQuantitySetAsideFor(ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection) {
+    private ImmutableList<ChipRoll> applyQuantitySetAsideFor(ImmutableList<ChipRoll> chipRolls) {
 
-        ImmutableSortedMap.Builder<Denomination, ChipRoll> selectedChips = new ImmutableSortedMap.Builder<>(
-                new DenominationComparator());
+        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
 
-        for (ChipRoll chipRoll : pokerChipCollection.values()) {
+        for (ChipRoll chipRoll : chipRolls) {
             PokerChip pokerChip = chipRoll.getPokerChip();
             ChipRoll selectedChipRoll = chipRoll.toBuilder()
                     .setQuantity(chipRoll.getQuantity() + Constants.BONUS_ONE_MIN_QUANTITY)
                     .setPokerChip(pokerChip)
                     .build();
-            selectedChips.put(pokerChip.getDenomination(), selectedChipRoll);
+            selectedChips.add(selectedChipRoll);
         }
 
         return selectedChips.build();
     }
 
     private PokerTable getBonusOnePokerTableFrom(PokerTable pokerTable) {
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollectionAfterSetAside =
+        ImmutableList<ChipRoll> chipRollsAfterSetAside =
                 setPokerChipsAsideIfBonusOneAlgorithm(pokerTable.getPokerChipCollection(),
                                                       Constants.BONUS_ONE_MIN_QUANTITY);
 
         Amount remainingBuyIn = pokerTable.getBuyIn();
-        for (ChipRoll chipRoll : pokerChipCollectionAfterSetAside.values()) {
+        for (ChipRoll chipRoll : chipRollsAfterSetAside) {
             Amount denomination = chipRoll.getPokerChip().getDenomination().getAmount();
             remainingBuyIn = remainingBuyIn.subtract(denomination.multiply(Constants.BONUS_ONE_MIN_QUANTITY));
         }
 
         return pokerTable.toBuilder()
-                .setPokerChipCollection(pokerChipCollectionAfterSetAside)
+                .setPokerChipCollection(chipRollsAfterSetAside)
                 .setBuyIn(remainingBuyIn)
                 .build();
     }

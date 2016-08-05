@@ -1,7 +1,6 @@
 package com.solium.pcd.bo;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.solium.pcd.domain.ChipRoll;
 import com.solium.pcd.domain.Color;
 import com.solium.pcd.domain.Denomination;
@@ -28,15 +27,15 @@ public class PokerChipDistributionForBonusTwoStrategyTest extends TestCase {
         Player actualPlayer = new PokerChipDistributionForBonusTwoStrategy()
                 .calculate(new PokerChipForBonusTwoMapper().mapFrom(getTestCaseOneData()));
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
+        ImmutableList<ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
 
-        assertEquals(6, pokerChipDistribution.size());
-        assertChipRoll(pokerChipDistribution, 4, Color.RED, Denomination.ONE_DOLLAR);
-        assertChipRoll(pokerChipDistribution, 4, Color.BLUE, Denomination.FIFTY_CENT);
-        assertChipRoll(pokerChipDistribution, 10, Color.BLACK, Denomination.TWENTY_FIVE_CENTS);
-        assertChipRoll(pokerChipDistribution, 9, Color.GREEN, Denomination.TEN_CENTS);
-        assertChipRoll(pokerChipDistribution, 10, Color.YELLOW, Denomination.FIVE_CENTS);
-        assertChipRoll(pokerChipDistribution, 10, Color.TAUPE, Denomination.ONE_CENT);
+        assertSize(6, pokerChipDistribution);
+        assertChipRoll(pokerChipDistribution.get(0), 4, Color.RED, Denomination.ONE_DOLLAR);
+        assertChipRoll(pokerChipDistribution.get(1), 4, Color.BLUE, Denomination.FIFTY_CENT);
+        assertChipRoll(pokerChipDistribution.get(2), 10, Color.BLACK, Denomination.TWENTY_FIVE_CENTS);
+        assertChipRoll(pokerChipDistribution.get(3), 9, Color.GREEN, Denomination.TEN_CENTS);
+        assertChipRoll(pokerChipDistribution.get(4), 10, Color.YELLOW, Denomination.FIVE_CENTS);
+        assertChipRoll(pokerChipDistribution.get(5), 10, Color.TAUPE, Denomination.ONE_CENT);
     }
 
     @Test
@@ -45,15 +44,15 @@ public class PokerChipDistributionForBonusTwoStrategyTest extends TestCase {
         Player actualPlayer = new PokerChipDistributionForBonusTwoStrategy()
                 .calculate(new PokerChipForBonusTwoMapper().mapFrom(getTestCaseTwoData()));
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
+        ImmutableList<ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
 
-        assertEquals(6, pokerChipDistribution.size());
-        assertChipRoll(pokerChipDistribution, 5, Color.RED, Denomination.ONE_DOLLAR);
-        assertChipRoll(pokerChipDistribution, 5, Color.BLUE, Denomination.FIFTY_CENT);
-        assertChipRoll(pokerChipDistribution, 10, Color.BLACK, Denomination.TWENTY_FIVE_CENTS);
-        assertChipRoll(pokerChipDistribution, 10, Color.GREEN, Denomination.TEN_CENTS);
-        assertChipRoll(pokerChipDistribution, 10, Color.YELLOW, Denomination.FIVE_CENTS);
-        assertChipRoll(pokerChipDistribution, 10, Color.TAUPE, Denomination.ONE_CENT);
+        assertSize(6, pokerChipDistribution);
+        assertChipRoll(pokerChipDistribution.get(0), 5, Color.RED, Denomination.ONE_DOLLAR);
+        assertChipRoll(pokerChipDistribution.get(1), 5, Color.BLUE, Denomination.FIFTY_CENT);
+        assertChipRoll(pokerChipDistribution.get(2), 10, Color.BLACK, Denomination.TWENTY_FIVE_CENTS);
+        assertChipRoll(pokerChipDistribution.get(3), 10, Color.GREEN, Denomination.TEN_CENTS);
+        assertChipRoll(pokerChipDistribution.get(4), 10, Color.YELLOW, Denomination.FIVE_CENTS);
+        assertChipRoll(pokerChipDistribution.get(5), 10, Color.TAUPE, Denomination.ONE_CENT);
     }
 
     @Test
@@ -62,15 +61,15 @@ public class PokerChipDistributionForBonusTwoStrategyTest extends TestCase {
         Player actualPlayer = new PokerChipDistributionForBonusTwoStrategy()
                 .calculate(new PokerChipForBonusTwoMapper().mapFrom(getTestCaseThreeData()));
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
+        ImmutableList<ChipRoll> pokerChipDistribution = actualPlayer.getPokerChipDistribution();
 
-        assertEquals(6, pokerChipDistribution.size());
-        assertChipRoll(pokerChipDistribution, 0, Color.RED, Denomination.ONE_DOLLAR);
-        assertChipRoll(pokerChipDistribution, 0, Color.BLUE, Denomination.FIFTY_CENT);
-        assertChipRoll(pokerChipDistribution, 0, Color.BLACK, Denomination.TWENTY_FIVE_CENTS);
-        assertChipRoll(pokerChipDistribution, 0, Color.GREEN, Denomination.TEN_CENTS);
-        assertChipRoll(pokerChipDistribution, 0, Color.YELLOW, Denomination.FIVE_CENTS);
-        assertChipRoll(pokerChipDistribution, 1, Color.TAUPE, Denomination.ONE_CENT);
+        assertSize(6, pokerChipDistribution);
+        assertChipRoll(pokerChipDistribution.get(0), 0, Color.RED, Denomination.ONE_DOLLAR);
+        assertChipRoll(pokerChipDistribution.get(1), 0, Color.BLUE, Denomination.FIFTY_CENT);
+        assertChipRoll(pokerChipDistribution.get(2), 0, Color.BLACK, Denomination.TWENTY_FIVE_CENTS);
+        assertChipRoll(pokerChipDistribution.get(3), 0, Color.GREEN, Denomination.TEN_CENTS);
+        assertChipRoll(pokerChipDistribution.get(4), 0, Color.YELLOW, Denomination.FIVE_CENTS);
+        assertChipRoll(pokerChipDistribution.get(5), 1, Color.TAUPE, Denomination.ONE_CENT);
     }
 
     @Test

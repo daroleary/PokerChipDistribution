@@ -1,7 +1,7 @@
 package com.solium.pcd.domain;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableList;
 import com.solium.pcd.contract.Contract;
 import com.solium.pcd.math.Amount;
 
@@ -9,13 +9,13 @@ public class PokerTable {
 
     private final Algorithm _algorithm;
     private final Amount _buyIn;
-    private final ImmutableSortedMap<Denomination, ChipRoll> _pokerChipCollection;
+    private final ImmutableList<ChipRoll> _pokerChipCollection;
 
     public PokerTable(Builder builder) {
 
         Algorithm algorithm = builder._algorithm;
         Amount buyIn = builder._buyIn;
-        ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection = builder._pokerChipCollection;
+        ImmutableList<ChipRoll> pokerChipCollection = builder._pokerChipCollection;
 
         Preconditions.checkNotNull(algorithm, "Algorithm must not be null.");
         Preconditions.checkNotNull(buyIn, "Buy in must not be null.");
@@ -36,7 +36,7 @@ public class PokerTable {
         return _buyIn;
     }
 
-    public ImmutableSortedMap<Denomination, ChipRoll> getPokerChipCollection() {
+    public ImmutableList<ChipRoll> getPokerChipCollection() {
         return _pokerChipCollection;
     }
 
@@ -52,7 +52,7 @@ public class PokerTable {
 
         private Algorithm _algorithm;
         private Amount _buyIn;
-        private ImmutableSortedMap<Denomination, ChipRoll> _pokerChipCollection;
+        private ImmutableList<ChipRoll> _pokerChipCollection;
 
         private Builder() {
         }
@@ -67,7 +67,7 @@ public class PokerTable {
             return this;
         }
 
-        public Builder setPokerChipCollection(ImmutableSortedMap<Denomination, ChipRoll> pokerChipCollection) {
+        public Builder setPokerChipCollection(ImmutableList<ChipRoll> pokerChipCollection) {
             _pokerChipCollection = pokerChipCollection;
             return this;
         }

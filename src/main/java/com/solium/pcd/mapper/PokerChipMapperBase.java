@@ -1,30 +1,27 @@
 package com.solium.pcd.mapper;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.solium.pcd.contract.Contract;
 import com.solium.pcd.domain.Algorithm;
 import com.solium.pcd.domain.ChipRoll;
+import com.solium.pcd.domain.ChipRollComparator;
 import com.solium.pcd.domain.Color;
 import com.solium.pcd.domain.Denomination;
-import com.solium.pcd.domain.DenominationComparator;
 import com.solium.pcd.domain.PokerChip;
 import com.solium.pcd.domain.PokerTable;
 import com.solium.pcd.exception.MapperException;
 import com.solium.pcd.exception.PokerChipException;
 import com.solium.pcd.math.Amount;
 import com.solium.pcd.util.Constants;
+import com.solium.pcd.util.ImmutableListCollector;
 import com.solium.pcd.util.Util;
 
 import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static com.solium.pcd.util.Constants.COLOR_TO_DENOMINATION;
 
@@ -38,7 +35,7 @@ abstract class PokerChipMapperBase {
         int numberOfPlayers = getIntegerFrom(listItr.next());
         Amount buyIn = Amount.of(listItr.next());
 
-        ImmutableSortedMap<Denomination, ChipRoll> pokerCollection
+        ImmutableList<ChipRoll> pokerCollection
                 = getChipBreakdowns(chipBreakdown,
                                     numberOfPlayers,
                                     algorithm);
@@ -50,9 +47,9 @@ abstract class PokerChipMapperBase {
                 .build();
     }
 
-    private ImmutableSortedMap<Denomination, ChipRoll> getChipBreakdowns(final String chipsBreakDown,
-                                                                         final int numberOfPlayers,
-                                                                         Algorithm algorithm) throws MapperException, PokerChipException {
+    private ImmutableList<ChipRoll> getChipBreakdowns(final String chipsBreakDown,
+                                                      final int numberOfPlayers,
+                                                      Algorithm algorithm) throws MapperException, PokerChipException {
 
         ImmutableList<String> chipBreakdowns = ImmutableList.copyOf(chipsBreakDown.split(","));
         if (chipBreakdowns.isEmpty()) {
@@ -60,23 +57,17 @@ abstract class PokerChipMapperBase {
                     "Input chip breakdown is invalid, should be in format of 00/$0.00,.. but is %s",
                     chipsBreakDown));
         }
-
-        ImmutableSortedMap.Builder<Denomination, ChipRoll> chipRolls =
-                ImmutableSortedMap.orderedBy(new DenominationComparator());
-
-        chipRolls.putAll(
-                getChipRolls(numberOfPlayers, chipBreakdowns, algorithm)
-        );
-
-        return chipRolls.build();
+        return getChipRolls(numberOfPlayers, chipBreakdowns, algorithm);
     }
 
-    private Map<Denomination, ChipRoll> getChipRolls(int numberOfPlayers,
-                                                     ImmutableList<String> chipBreakdowns,
-                                                     Algorithm algorithm) {
+    private ImmutableList<ChipRoll> getChipRolls(int numberOfPlayers,
+                                                 ImmutableList<String> chipBreakdowns,
+                                                 Algorithm algorithm) {
+
         return chipBreakdowns.stream()
                 .map(toChipRoll(numberOfPlayers, algorithm))
-                .collect(denominationToChipRollLookup());
+                .sorted(new ChipRollComparator())
+                .collect(new ImmutableListCollector<>());
     }
 
     private ChipRoll getChipRollFrom(int numberOfPlayers,
@@ -100,9 +91,11 @@ abstract class PokerChipMapperBase {
     private String getFormatErrorByAlgorithm(String chipBreakdown, Algorithm algorithm) {
         String formatError;
         if (Algorithm.BONUS_TWO == algorithm) {
-           formatError = MessageFormat.format("Chip breakdown invalid, should be of the format 00/Color but is [{0}]", chipBreakdown);
+            formatError = MessageFormat.format("Chip breakdown invalid, should be of the format 00/Color but is [{0}]",
+                                               chipBreakdown);
         } else {
-            formatError = MessageFormat.format("Chip breakdown invalid, should be of the format 00/$0.00 but is [{0}]", chipBreakdown);
+            formatError = MessageFormat.format("Chip breakdown invalid, should be of the format 00/$0.00 but is [{0}]",
+                                               chipBreakdown);
         }
         return formatError;
     }
@@ -150,11 +143,6 @@ abstract class PokerChipMapperBase {
                 .setQuantity(quantity)
                 .setPokerChip(pokerChip)
                 .build();
-    }
-
-    private Collector<ChipRoll, ?, Map<Denomination, ChipRoll>> denominationToChipRollLookup() {
-        return Collectors.toMap(chipRoll -> chipRoll.getPokerChip().getDenomination(),
-                                Function.identity());
     }
 
     private Function<String, ChipRoll> toChipRoll(int numberOfPlayers, Algorithm algorithm) {

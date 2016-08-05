@@ -1,7 +1,6 @@
 package com.solium.pcd.util;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.solium.pcd.domain.ChipRoll;
 import com.solium.pcd.domain.Color;
 import com.solium.pcd.domain.Denomination;
@@ -19,7 +18,7 @@ public class TestCase extends Assert {
         assertEquals(errorMessage, expected, collection.size());
     }
 
-    public static ImmutableList<String> getProblemOneTestCaseOneData() {
+    protected static ImmutableList<String> getProblemOneTestCaseOneData() {
 
         ImmutableList.Builder<String> pokerDetails = new ImmutableList.Builder<>();
 
@@ -30,7 +29,7 @@ public class TestCase extends Assert {
         return pokerDetails.build();
     }
 
-    public static ImmutableList<String> getProblemOneTestCaseTwoData() {
+    protected static ImmutableList<String> getProblemOneTestCaseTwoData() {
 
         ImmutableList.Builder<String> pokerDetails = new ImmutableList.Builder<>();
 
@@ -42,7 +41,7 @@ public class TestCase extends Assert {
         return pokerDetails.build();
     }
 
-    public static ImmutableList<String> getProblemOneTestCaseThreeData() {
+    protected static ImmutableList<String> getProblemOneTestCaseThreeData() {
 
         ImmutableList.Builder<String> pokerDetails = new ImmutableList.Builder<>();
 
@@ -54,26 +53,16 @@ public class TestCase extends Assert {
         return pokerDetails.build();
     }
 
-    protected static void assertChipRoll(ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution,
+    protected static void assertChipRoll(ChipRoll chipRoll,
                                          Denomination expectedDenomination,
                                          int expectedQuantity) {
-
-        PokerChip expectedPokerChip = PokerChip.newBuilder()
-                .setColor(Color.UNKNOWN)
-                .setDenomination(expectedDenomination)
-                .build();
-
-        ChipRoll chipRoll = pokerChipDistribution.get(expectedPokerChip.getDenomination());
-        assertEquals(expectedQuantity, chipRoll.getQuantity());
-        assertEquals(expectedPokerChip, chipRoll.getPokerChip());
-
-        assertChipRoll(pokerChipDistribution,
+        assertChipRoll(chipRoll,
                        expectedQuantity,
                        Color.UNKNOWN,
                        expectedDenomination);
     }
 
-    protected static void assertChipRoll(ImmutableSortedMap<Denomination, ChipRoll> pokerChipDistribution,
+    protected static void assertChipRoll(ChipRoll chipRoll,
                                          int expectedQuantity,
                                          Color expectedColor,
                                          Denomination expectedDenomination) {
@@ -83,7 +72,6 @@ public class TestCase extends Assert {
                 .setDenomination(expectedDenomination)
                 .build();
 
-        ChipRoll chipRoll = pokerChipDistribution.get(expectedPokerChip.getDenomination());
         assertEquals(expectedQuantity, chipRoll.getQuantity());
         assertEquals(expectedPokerChip, chipRoll.getPokerChip());
     }
