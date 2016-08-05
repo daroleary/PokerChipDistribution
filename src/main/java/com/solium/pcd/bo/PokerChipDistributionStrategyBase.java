@@ -16,6 +16,7 @@ import com.solium.pcd.util.Constants;
 import com.solium.pcd.util.ImmutableListCollector;
 
 import java.text.MessageFormat;
+import java.util.function.Function;
 
 abstract class PokerChipDistributionStrategyBase {
 
@@ -63,12 +64,11 @@ abstract class PokerChipDistributionStrategyBase {
                 .collect(new ImmutableListCollector<>());
     }
 
-
     private Amount getTotalAmountFrom(ImmutableList<ChipRoll> chipRolls) {
         return chipRolls.stream()
-                .map(cr -> {
-                    final Amount amount = cr.getPokerChip().getDenomination().getAmount();
-                    return amount.multiply(cr.getQuantity());
+                .map(chipRoll -> {
+                    final Amount amount = chipRoll.getPokerChip().getDenomination().getAmount();
+                    return amount.multiply(chipRoll.getQuantity());
                 })
                 .reduce(Amount.ZERO, Amount::add);
     }
@@ -167,9 +167,13 @@ abstract class PokerChipDistributionStrategyBase {
 
     ImmutableList<ChipRoll> setPokerChipsAsideIfBonusOneAlgorithm(ImmutableList<ChipRoll> chipRolls,
                                                                   int quantityToSetAside) {
+        return chipRolls.stream()
+                .map(toSetQuantityAside(quantityToSetAside))
+                .collect(new ImmutableListCollector<>());
+    }
 
-        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
-        for (ChipRoll chipRoll : chipRolls) {
+    private Function<ChipRoll, ChipRoll> toSetQuantityAside(int quantityToSetAside) {
+        return chipRoll -> {
             PokerChip pokerChip = chipRoll.getPokerChip();
             Denomination denomination = pokerChip.getDenomination();
 
@@ -180,30 +184,11 @@ abstract class PokerChipDistributionStrategyBase {
                                       quantityToSetAside,
                                       quantity));
 
-            ChipRoll chipRollToSetAside = chipRoll.toBuilder()
+            return chipRoll.toBuilder()
                     .setPokerChip(pokerChip)
                     .setQuantity(quantity - quantityToSetAside)
                     .build();
-            selectedChips.add(chipRollToSetAside);
-        }
-
-        return selectedChips.build();
-    }
-
-    private ImmutableList<ChipRoll> applyQuantitySetAsideFor(ImmutableList<ChipRoll> chipRolls) {
-
-        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
-
-        for (ChipRoll chipRoll : chipRolls) {
-            PokerChip pokerChip = chipRoll.getPokerChip();
-            ChipRoll selectedChipRoll = chipRoll.toBuilder()
-                    .setQuantity(chipRoll.getQuantity() + Constants.BONUS_ONE_MIN_QUANTITY)
-                    .setPokerChip(pokerChip)
-                    .build();
-            selectedChips.add(selectedChipRoll);
-        }
-
-        return selectedChips.build();
+        };
     }
 
     private PokerTable getBonusOnePokerTableFrom(PokerTable pokerTable) {
@@ -221,5 +206,13 @@ abstract class PokerChipDistributionStrategyBase {
                 .setPokerChipCollection(chipRollsAfterSetAside)
                 .setBuyIn(remainingBuyIn)
                 .build();
+    }
+
+    private ImmutableList<ChipRoll> applyQuantitySetAsideFor(ImmutableList<ChipRoll> chipRolls) {
+        return chipRolls.stream()
+                .map(chipRoll -> chipRoll.toBuilder()
+                        .setQuantity(chipRoll.getQuantity() + Constants.BONUS_ONE_MIN_QUANTITY)
+                        .build())
+                .collect(new ImmutableListCollector<>());
     }
 }
