@@ -20,23 +20,22 @@ import java.util.function.Function;
 
 abstract class PokerChipDistributionStrategyBase {
 
+    private AmountContextHolder _remainingBuyIn;
+
     Player getOptimumDistribution(PokerTable pokerTable) throws CalculationException, PokerChipException {
 
-        Amount remainingBuyIn = pokerTable.getBuyIn();
+        setRemainingBuyIn(pokerTable.getBuyIn());
 
         ImmutableList<ChipRoll> selectedChips =
-                applyInitialBuyInFor(pokerTable.getPokerChipCollection(), remainingBuyIn);
+                applyInitialBuyInFor(pokerTable.getPokerChipCollection());
 
-        remainingBuyIn = remainingBuyIn.subtract(getTotalAmountFrom(selectedChips));
+        selectedChips = takeOverBuyInToZeroFor(selectedChips);
 
-        selectedChips = takeOverBuyInToZeroFor(selectedChips, remainingBuyIn);
-
-        Amount totalBuyIn = getTotalAmountFrom(selectedChips);
-        if (!(pokerTable.getBuyIn().equals(totalBuyIn))) {
+        if (!(getRemainingBuyIn().equals(Amount.ZERO))) {
             throw new CalculationException(MessageFormat.format(
                     "Unable to get optimum poker chip distribution from given inputs. Expected buy in was {0} but was calculated as {1}",
                     pokerTable.getBuyIn(),
-                    totalBuyIn));
+                    getTotalAmountFrom(selectedChips)));
         }
 
         return Player.newBuilder()
@@ -73,68 +72,61 @@ abstract class PokerChipDistributionStrategyBase {
                 .reduce(Amount.ZERO, Amount::add);
     }
 
-    private ImmutableList<ChipRoll> applyInitialBuyInFor(ImmutableList<ChipRoll> chipRolls,
-                                                         Amount remainingBuyIn) {
-
-        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
-
-        Amount buyInRemaining = remainingBuyIn;
-        for (ChipRoll chipRoll : chipRolls) {
-            PokerChip pokerChip = chipRoll.getPokerChip();
-
-            int buyInQuantity = buyInQuantityFor(chipRoll, buyInRemaining);
-            ChipRoll selectedChipRoll = chipRoll.toBuilder()
-                    .setQuantity(buyInQuantity)
-                    .setPokerChip(pokerChip)
-                    .build();
-
-            selectedChips.add(selectedChipRoll);
-            buyInRemaining = buyInRemaining.subtract(pokerChip.getDenomination().getAmount().multiply(buyInQuantity));
-        }
-        return selectedChips.build();
+    private ImmutableList<ChipRoll> applyInitialBuyInFor(ImmutableList<ChipRoll> chipRolls) {
+        return chipRolls.stream()
+                .map(chipRoll -> {
+                    PokerChip pokerChip = chipRoll.getPokerChip();
+                    Amount remainingBuyIn = getRemainingBuyIn();
+                    int buyInQuantity = buyInQuantityFor(chipRoll);
+                    Amount amount = pokerChip.getDenomination().getAmount();
+                    setRemainingBuyIn(remainingBuyIn.subtract(amount.multiply(buyInQuantity)));
+                    return chipRoll.toBuilder()
+                            .setQuantity(buyInQuantity)
+                            .build();
+                })
+                .collect(new ImmutableListCollector<>());
     }
 
-    private ImmutableList<ChipRoll> takeOverBuyInToZeroFor(ImmutableList<ChipRoll> chipRolls,
-                                                           Amount remainingBuyIn) throws PokerChipException {
-        if (remainingBuyIn.greaterThanOrEqual(Amount.ZERO)) {
+    private ImmutableList<ChipRoll> takeOverBuyInToZeroFor(ImmutableList<ChipRoll> chipRolls) throws PokerChipException {
+
+        if (getRemainingBuyIn().greaterThanOrEqual(Amount.ZERO)) {
             return chipRolls;
         }
 
-        ImmutableList.Builder<ChipRoll> selectedChips = new ImmutableList.Builder<>();
+        return chipRolls.stream()
+                .sorted(Ordering.from(new ChipRollComparator()).reverse())
+                .map(chipRoll -> {
+                    PokerChip pokerChip = chipRoll.getPokerChip();
 
-        Amount overBuyIn = remainingBuyIn.abs();
-
-        for (ChipRoll chipRoll : chipRolls.reverse()) {
-            PokerChip pokerChip = chipRoll.getPokerChip();
-
-            int selectedQuantity = chipRoll.getQuantity();
-            if (!overBuyIn.equals(Amount.ZERO)) {
-                int overBuyInQuantity = overBuyInQuantityUpToMax(chipRoll, overBuyIn.abs());
-                if (overBuyInQuantity > 0) {
-                    selectedQuantity = selectedQuantity - overBuyInQuantity;
-                    Amount denomination = pokerChip.getDenomination().getAmount();
-                    overBuyIn = overBuyIn.subtract(denomination.multiply(overBuyInQuantity));
-                }
-            }
-
-            ChipRoll selectedChipRoll = chipRoll.toBuilder()
-                    .setQuantity(selectedQuantity)
-                    .setPokerChip(pokerChip)
-                    .build();
-
-            selectedChips.add(selectedChipRoll);
-        }
-        return selectedChips.build();
+                    Amount overBuyIn = getRemainingBuyIn().abs();
+                    int selectedQuantity = chipRoll.getQuantity();
+                    if (overBuyIn.greaterThan(Amount.ZERO)) {
+                        int overBuyInQuantity = overBuyInQuantityUpToMax(chipRoll);
+                        if (overBuyInQuantity > 0) {
+                            selectedQuantity = selectedQuantity - overBuyInQuantity;
+                            Amount denomination = pokerChip.getDenomination().getAmount();
+                            setRemainingBuyIn(overBuyIn.subtract(denomination.multiply(overBuyInQuantity)));
+                        }
+                    }
+                    return chipRoll.toBuilder()
+                            .setQuantity(selectedQuantity)
+                            .build();
+                })
+                .collect(new ImmutableListCollector<>());
     }
 
-    private int buyInQuantityFor(ChipRoll chipRoll, final Amount remainingBuyIn) {
+    private int buyInQuantityFor(ChipRoll chipRoll) {
 
-        Amount buyInQuantity = buyInQuantityUpToMax(chipRoll, remainingBuyIn);
-        Amount quantity = Amount.of(chipRoll.getQuantity());
+        Amount buyInQuantity = Amount.ZERO;
+        Amount remainingBuyIn = getRemainingBuyIn();
+        if (remainingBuyIn.greaterThan(Amount.ZERO)) {
+            buyInQuantity = buyInQuantityUpToMax(chipRoll, remainingBuyIn);
+            Amount quantity = Amount.of(chipRoll.getQuantity());
 
-        if (remainingBuyIn.greaterThan(Amount.ZERO) &&
-                (quantity.subtract(buyInQuantity).greaterThan(Amount.ZERO))) {
-            buyInQuantity = buyInQuantity.add(Amount.ONE);
+            if (remainingBuyIn.greaterThan(Amount.ZERO) &&
+                    (quantity.subtract(buyInQuantity).greaterThan(Amount.ZERO))) {
+                buyInQuantity = buyInQuantity.add(Amount.ONE);
+            }
         }
 
         return buyInQuantity.intValue();
@@ -152,7 +144,9 @@ abstract class PokerChipDistributionStrategyBase {
         return quantity;
     }
 
-    private int overBuyInQuantityUpToMax(ChipRoll chipRoll, Amount overBuyIn) {
+    private int overBuyInQuantityUpToMax(ChipRoll chipRoll) {
+        Amount overBuyIn = getRemainingBuyIn().abs();
+
         PokerChip pokerChip = chipRoll.getPokerChip();
         Amount maxQuantity = Amount.of(overBuyIn.divide(pokerChip.getDenomination().getAmount()));
 
@@ -214,5 +208,17 @@ abstract class PokerChipDistributionStrategyBase {
                         .setQuantity(chipRoll.getQuantity() + Constants.BONUS_ONE_MIN_QUANTITY)
                         .build())
                 .collect(new ImmutableListCollector<>());
+    }
+
+    private Amount getRemainingBuyIn() {
+        return _remainingBuyIn.getAmount();
+    }
+
+    private void setRemainingBuyIn(Amount amount) {
+        if (_remainingBuyIn == null) {
+            _remainingBuyIn = AmountContextHolder.of(amount);
+        } else {
+            _remainingBuyIn.setAmount(amount);
+        }
     }
 }
